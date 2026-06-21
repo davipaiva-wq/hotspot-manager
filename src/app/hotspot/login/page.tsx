@@ -80,17 +80,19 @@ export default async function HotspotLogin({
     }
   }
 
-  // All good — redirect to MikroTik login endpoint to authenticate
-  // linkLogin is an internal MikroTik URL like http://192.168.xx.xx/login
-  // The user's browser (on local network) will follow this redirect.
+  // All good — redirect to MikroTik using the GENERIC hotspot user.
+  // The real user was validated above; MikroTik only needs to know the generic account.
+  const mkUser = process.env.MIKROTIK_HOTSPOT_USER ?? "hotspot";
+  const mkPass = process.env.MIKROTIK_HOTSPOT_PASS ?? "hotspot";
+
   let loginUrl: URL;
   try {
     loginUrl = new URL(linkLogin);
   } catch {
     return <ErrorPage title="Erro de configuração" message="URL de login inválida. Verifique as configurações do MikroTik." />;
   }
-  loginUrl.searchParams.set("username", username);
-  loginUrl.searchParams.set("password", password);
+  loginUrl.searchParams.set("username", mkUser);
+  loginUrl.searchParams.set("password", mkPass);
   if (dst) loginUrl.searchParams.set("dst", dst);
 
   redirect(loginUrl.toString());
