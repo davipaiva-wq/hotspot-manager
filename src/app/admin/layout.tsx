@@ -27,6 +27,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin/reports" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors">
             Relatórios
           </Link>
+          <Link href="/admin/senha" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors">
+            Alterar senha
+          </Link>
         </nav>
         <div className="px-3 py-4 border-t border-gray-700">
           <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }); }}>
