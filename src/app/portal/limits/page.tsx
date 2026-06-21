@@ -70,7 +70,7 @@ export default function LimitsPage() {
             value={dailyMB}
             onChange={(e) => setDailyMB(e.target.value)}
             placeholder="Ex: 500 (500 MB por dia)"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {dailyMB && parseFloat(dailyMB) > 0 && (
             <p className="text-xs text-gray-400 mt-1">

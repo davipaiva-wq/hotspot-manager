@@ -53,11 +53,11 @@ export default function ReportsPage() {
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap gap-4 items-end">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">De</label>
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900" />
         </div>
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Até</label>
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900" />
         </div>
         <button onClick={load} disabled={loading} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm rounded-lg px-4 py-2 transition-colors">
           {loading ? "..." : "Filtrar"}

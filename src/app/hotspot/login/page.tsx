@@ -112,7 +112,7 @@ function LoginForm({ linkLogin, dst, ip, mac }: { linkLogin: string; dst: string
               name="username"
               type="text"
               autoComplete="username"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
               autoFocus
             />
@@ -123,7 +123,7 @@ function LoginForm({ linkLogin, dst, ip, mac }: { linkLogin: string; dst: string
               name="password"
               type="password"
               autoComplete="current-password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
