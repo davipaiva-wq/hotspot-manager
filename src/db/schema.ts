@@ -51,6 +51,15 @@ export const sessions = pgTable("sessions", {
   endedAt: timestamp("ended_at"),
 });
 
+// Mapeia MAC → usuário (atualizado a cada login no hotspot)
+export const macMappings = pgTable("mac_mappings", {
+  mac: varchar("mac", { length: 17 }).primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const dailyUsage = pgTable("daily_usage", {
   id: serial("id").primaryKey(),
   userId: integer("user_id")

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, macMappings } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { todayDate } from "@/lib/utils";
 import bcrypt from "bcryptjs";
@@ -78,6 +78,14 @@ export default async function HotspotLogin({
         />
       );
     }
+  }
+
+  // Record MAC → user mapping so the scheduler can attribute usage to this user
+  if (mac) {
+    await db
+      .insert(macMappings)
+      .values({ mac, userId: user.id, updatedAt: new Date() })
+      .onConflictDoUpdate({ target: macMappings.mac, set: { userId: user.id, updatedAt: new Date() } });
   }
 
   // All good — redirect to MikroTik using the GENERIC hotspot user.

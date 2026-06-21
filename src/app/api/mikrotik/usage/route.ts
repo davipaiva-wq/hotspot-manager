@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { users, sessions, dailyUsage } from "@/db/schema";
+import { users, sessions, dailyUsage, macMappings } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { todayDate } from "@/lib/utils";
 
 // MikroTik scheduler POSTs usage every N minutes.
 // Body: { sessions: [{ username, sessionId, ip, mac, bytesIn, bytesOut }] }
+// With generic hotspot user, we resolve the real user via mac_mappings table.
 export async function POST(req: NextRequest) {
   const apiKey = req.headers.get("x-api-key");
   if (apiKey !== process.env.MIKROTIK_API_KEY) {
@@ -23,17 +24,41 @@ export async function POST(req: NextRequest) {
   }[] = body.sessions ?? [];
 
   const today = todayDate();
-  const results: { username: string; status: string }[] = [];
+  const results: { mac: string; username: string; status: string }[] = [];
 
   for (const s of activeSessions) {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.username, s.username))
-      .limit(1);
+    // Try to find user by MAC mapping first (handles generic hotspot user case)
+    let user = null;
+
+    if (s.mac) {
+      const [mapping] = await db
+        .select({ userId: macMappings.userId })
+        .from(macMappings)
+        .where(eq(macMappings.mac, s.mac))
+        .limit(1);
+
+      if (mapping) {
+        const [found] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, mapping.userId))
+          .limit(1);
+        user = found ?? null;
+      }
+    }
+
+    // Fallback: look up by username (works when individual users are used)
+    if (!user && s.username && s.username !== "hotspot") {
+      const [found] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, s.username))
+        .limit(1);
+      user = found ?? null;
+    }
 
     if (!user) {
-      results.push({ username: s.username, status: "not_found" });
+      results.push({ mac: s.mac, username: s.username, status: "not_found" });
       continue;
     }
 
@@ -63,7 +88,6 @@ export async function POST(req: NextRequest) {
           })
           .where(eq(users.id, user.id));
 
-        // Upsert daily usage
         const [day] = await db
           .select()
           .from(dailyUsage)
@@ -76,11 +100,7 @@ export async function POST(req: NextRequest) {
             .set({ bytesTotal: day.bytesTotal + delta })
             .where(eq(dailyUsage.id, day.id));
         } else {
-          await db.insert(dailyUsage).values({
-            userId: user.id,
-            date: today,
-            bytesTotal: delta,
-          });
+          await db.insert(dailyUsage).values({ userId: user.id, date: today, bytesTotal: delta });
         }
       }
     } else {
@@ -103,7 +123,7 @@ export async function POST(req: NextRequest) {
         .where(eq(users.id, user.id));
     }
 
-    results.push({ username: s.username, status: "ok" });
+    results.push({ mac: s.mac, username: user.username, status: "ok" });
   }
 
   return NextResponse.json({ updated: results });
