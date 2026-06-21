@@ -59,8 +59,68 @@ export default function PortalHome() {
   const daysLeft = expiresAt ? Math.ceil((expiresAt.getTime() - today.getTime()) / 86400000) : null;
   const expired = daysLeft !== null && daysLeft <= 0;
 
+  const quotaEsgotada = profile.quotaBytes > 0 && profile.consumedBytes >= profile.quotaBytes;
+  const quotaAlerta = !quotaEsgotada && totalPct >= 80;
+  const diarioEsgotado = profile.dailyLimitBytes > 0 && profile.dailyConsumedBytes >= profile.dailyLimitBytes;
+  const diarioAlerta = !diarioEsgotado && dailyPct >= 80;
+
   return (
     <div className="space-y-5">
+      {quotaEsgotada && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+          <p className="font-bold text-red-700 mb-1">Limite de dados esgotado</p>
+          <p className="text-sm text-red-600 mb-4">
+            Você utilizou {formatBytes(profile.consumedBytes)} de {formatBytes(profile.quotaBytes)}.
+            Desconecte-se agora — enquanto conectado, o tráfego pode continuar sendo contabilizado.
+          </p>
+          <a
+            href="http://192.168.85.2/logout"
+            className="inline-block bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg px-5 py-2.5 transition-colors"
+          >
+            Desconectar WiFi agora
+          </a>
+        </div>
+      )}
+
+      {quotaAlerta && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Atenção: {totalPct}% do limite usado</p>
+            <p className="text-xs text-amber-700 mt-0.5">Restam apenas {formatBytes(remaining!)} do seu pacote.</p>
+          </div>
+        </div>
+      )}
+
+      {diarioEsgotado && (
+        <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
+          <p className="font-bold text-orange-700 mb-1">Limite diário atingido</p>
+          <p className="text-sm text-orange-600 mb-4">
+            Você usou {formatBytes(profile.dailyConsumedBytes)} de {formatBytes(profile.dailyLimitBytes)} hoje.
+            O acesso será liberado automaticamente à meia-noite. Se quiser se desconectar agora:
+          </p>
+          <a
+            href="http://192.168.85.2/logout"
+            className="inline-block bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold rounded-lg px-5 py-2.5 transition-colors"
+          >
+            Desconectar WiFi agora
+          </a>
+        </div>
+      )}
+
+      {diarioAlerta && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3">
+          <svg className="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Atenção: {dailyPct}% do limite diário usado</p>
+            <p className="text-xs text-amber-700 mt-0.5">Você já usou {formatBytes(profile.dailyConsumedBytes)} de {formatBytes(profile.dailyLimitBytes)} hoje.</p>
+          </div>
+        </div>
+      )}
       <div>
         <h1 className="text-xl font-bold text-gray-900">Meu Pacote</h1>
         <p className="text-sm text-gray-500 mt-0.5">Acompanhe seu plano e consumo de dados</p>
