@@ -17,12 +17,16 @@ export const users = pgTable("users", {
   username: varchar("username", { length: 64 }).notNull().unique(),
   passwordHash: text("password_hash").notNull(),
   name: text("name"),
+  // MAC é apenas informativo — login sempre por usuário/senha
   mac: varchar("mac", { length: 17 }),
   role: roleEnum("role").notNull().default("user"),
-  // quota in bytes (0 = unlimited)
+  // Pacote
+  packageName: text("package_name"),
+  packageExpiresAt: timestamp("package_expires_at"),
+  // Quota total em bytes (0 = ilimitado)
   quotaBytes: bigint("quota_bytes", { mode: "number" }).notNull().default(0),
   consumedBytes: bigint("consumed_bytes", { mode: "number" }).notNull().default(0),
-  // daily limit in bytes (0 = no daily limit)
+  // Limite diário em bytes (0 = sem limite diário)
   dailyLimitBytes: bigint("daily_limit_bytes", { mode: "number" }).notNull().default(0),
   dailyConsumedBytes: bigint("daily_consumed_bytes", { mode: "number" }).notNull().default(0),
   dailyResetAt: timestamp("daily_reset_at"),

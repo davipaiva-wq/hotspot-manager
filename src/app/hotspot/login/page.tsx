@@ -41,6 +41,16 @@ export default async function HotspotLogin({
     return <ErrorPage title="Senha incorreta" message="Usuário ou senha inválidos." />;
   }
 
+  // Verificar validade do pacote
+  if (user.packageExpiresAt && new Date(user.packageExpiresAt) < new Date()) {
+    return (
+      <ErrorPage
+        title="Pacote expirado"
+        message={`Seu pacote "${user.packageName ?? "atual"}" venceu em ${new Date(user.packageExpiresAt).toLocaleDateString("pt-BR")}. Entre em contato com o administrador para renovar.`}
+      />
+    );
+  }
+
   if (user.quotaBytes > 0 && user.consumedBytes >= user.quotaBytes) {
     return (
       <ErrorPage
