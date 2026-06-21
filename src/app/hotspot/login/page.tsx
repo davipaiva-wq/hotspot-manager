@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { users, macMappings } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { auth, signIn } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
 export default async function HotspotLogin({
@@ -16,29 +16,21 @@ export default async function HotspotLogin({
   const ip = params["ip"] ?? "";
   const error = params["error"] ?? "";
 
-  // Already logged in → go straight to conectar
-  const session = await auth();
-  if (session) {
-    redirect(
-      `/hotspot/conectar?link=${encodeURIComponent(linkLogin)}&mac=${encodeURIComponent(mac)}&ip=${encodeURIComponent(ip)}`
-    );
-  }
-
   async function loginAction(formData: FormData) {
     "use server";
-    const username = (formData.get("username") as string ?? "").trim();
+    const username = ((formData.get("username") as string) ?? "").trim();
     const password = (formData.get("password") as string) ?? "";
     const lLink = (formData.get("lLink") as string) ?? "";
     const lMac = (formData.get("lMac") as string) ?? "";
     const lIp = (formData.get("lIp") as string) ?? "";
 
-    const errorRedirect = `/hotspot/login?error=1&link-login-only=${encodeURIComponent(lLink)}&mac=${encodeURIComponent(lMac)}&ip=${encodeURIComponent(lIp)}`;
+    const errorUrl = `/hotspot/login?error=1&link-login-only=${encodeURIComponent(lLink)}&mac=${encodeURIComponent(lMac)}&ip=${encodeURIComponent(lIp)}`;
 
     const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
-    if (!user || !user.active) redirect(errorRedirect);
+    if (!user || !user.active) redirect(errorUrl);
 
     const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) redirect(errorRedirect);
+    if (!valid) redirect(errorUrl);
 
     if (lMac) {
       await db
@@ -47,11 +39,16 @@ export default async function HotspotLogin({
         .onConflictDoUpdate({ target: macMappings.mac, set: { userId: user.id, updatedAt: new Date() } });
     }
 
-    await signIn("credentials", {
-      username,
-      password,
-      redirectTo: `/hotspot/conectar?link=${encodeURIComponent(lLink)}&mac=${encodeURIComponent(lMac)}&ip=${encodeURIComponent(lIp)}`,
+    // Store user id in a short-lived cookie so /hotspot/conectar can identify them
+    const cookieStore = await cookies();
+    cookieStore.set("hsp-uid", String(user.id), {
+      httpOnly: true,
+      path: "/",
+      maxAge: 600, // 10 minutes to click conectar
+      sameSite: "lax",
     });
+
+    redirect(`/hotspot/conectar?link=${encodeURIComponent(lLink)}&mac=${encodeURIComponent(lMac)}`);
   }
 
   return (
