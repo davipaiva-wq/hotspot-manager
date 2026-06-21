@@ -72,8 +72,40 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (existing) {
-      const delta = totalBytes - (existing.bytesIn + existing.bytesOut);
-      if (delta > 0) {
+      const prevTotal = existing.bytesIn + existing.bytesOut;
+      const delta = totalBytes - prevTotal;
+
+      // Negative delta means MikroTik reused the same session ID for a new session
+      // (bytes restarted from 0). Treat it as a fresh session.
+      if (delta < 0) {
+        await db
+          .update(sessions)
+          .set({ bytesIn: s.bytesIn, bytesOut: s.bytesOut, startedAt: new Date() })
+          .where(eq(sessions.id, existing.id));
+
+        if (totalBytes > 0) {
+          await db
+            .update(users)
+            .set({
+              consumedBytes: user.consumedBytes + totalBytes,
+              dailyConsumedBytes: user.dailyConsumedBytes + totalBytes,
+              updatedAt: new Date(),
+            })
+            .where(eq(users.id, user.id));
+
+          const [day] = await db
+            .select()
+            .from(dailyUsage)
+            .where(and(eq(dailyUsage.userId, user.id), eq(dailyUsage.date, today)))
+            .limit(1);
+
+          if (day) {
+            await db.update(dailyUsage).set({ bytesTotal: day.bytesTotal + totalBytes }).where(eq(dailyUsage.id, day.id));
+          } else {
+            await db.insert(dailyUsage).values({ userId: user.id, date: today, bytesTotal: totalBytes });
+          }
+        }
+      } else if (delta > 0) {
         await db
           .update(sessions)
           .set({ bytesIn: s.bytesIn, bytesOut: s.bytesOut })
