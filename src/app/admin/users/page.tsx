@@ -10,6 +10,7 @@ interface User {
   mac: string | null;
   role: string;
   packageName: string | null;
+  packageDays: number;
   packageExpiresAt: string | null;
   quotaBytes: number;
   consumedBytes: number;
@@ -20,7 +21,7 @@ interface User {
 
 const emptyForm = {
   username: "", password: "", name: "", mac: "",
-  packageName: "", packageExpiresAt: "", quotaGB: "", dailyLimitMB: "",
+  packageName: "", packageDays: "30", packageExpiresAt: "", quotaGB: "", dailyLimitMB: "",
 };
 
 export default function UsersPage() {
@@ -54,6 +55,7 @@ export default function UsersPage() {
       name: u.name ?? "",
       mac: u.mac ?? "",
       packageName: u.packageName ?? "",
+      packageDays: String(u.packageDays ?? 30),
       packageExpiresAt: u.packageExpiresAt ? u.packageExpiresAt.slice(0, 10) : "",
       quotaGB: u.quotaBytes > 0 ? String(u.quotaBytes / 1073741824) : "",
       dailyLimitMB: u.dailyLimitBytes > 0 ? String(u.dailyLimitBytes / 1048576) : "",
@@ -70,6 +72,7 @@ export default function UsersPage() {
       name: form.name || null,
       mac: form.mac || null,
       packageName: form.packageName || null,
+      packageDays: form.packageDays ? parseInt(form.packageDays) : 30,
       packageExpiresAt: form.packageExpiresAt || null,
       quotaBytes: form.quotaGB ? Math.round(parseFloat(form.quotaGB) * 1073741824) : 0,
       dailyLimitBytes: form.dailyLimitMB ? Math.round(parseFloat(form.dailyLimitMB) * 1048576) : 0,
@@ -97,6 +100,17 @@ export default function UsersPage() {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ resetConsumed: true }),
+    });
+    load();
+  }
+
+  async function renew(u: User) {
+    const days = u.packageDays || 30;
+    if (!confirm(`Renovar pacote de "${u.username}" por ${days} dias e zerar o consumo?`)) return;
+    await fetch(`/api/admin/users/${u.id}/renew`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ days }),
     });
     load();
   }
@@ -173,6 +187,7 @@ export default function UsersPage() {
                     <td className="px-4 py-3">
                       <div className="flex gap-2 flex-wrap">
                         <button onClick={() => openEdit(u)} className="text-xs text-blue-600 hover:underline">Editar</button>
+                        <button onClick={() => renew(u)} className="text-xs text-green-600 hover:underline font-medium">Renovar</button>
                         <button onClick={() => toggleActive(u)} className="text-xs text-yellow-600 hover:underline">{u.active ? "Bloquear" : "Ativar"}</button>
                         <button onClick={() => resetConsumption(u)} className="text-xs text-gray-500 hover:underline">Zerar</button>
                         <button onClick={() => deleteUser(u)} className="text-xs text-red-500 hover:underline">Excluir</button>
@@ -204,7 +219,8 @@ export default function UsersPage() {
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Pacote</p>
                 <div className="space-y-3">
                   <Field label="Nome do pacote (ex: Plano 10GB, Plano Mensal)" value={form.packageName} onChange={v => setForm({ ...form, packageName: v })} />
-                  <Field label="Validade do pacote" type="date" value={form.packageExpiresAt} onChange={v => setForm({ ...form, packageExpiresAt: v })} />
+                  <Field label="Duração do pacote (dias) — usado no botão Renovar" type="number" value={form.packageDays} onChange={v => setForm({ ...form, packageDays: v })} />
+                  <Field label="Validade inicial (data de vencimento)" type="date" value={form.packageExpiresAt} onChange={v => setForm({ ...form, packageExpiresAt: v })} />
                   <Field label="Quota total (GB — 0 = ilimitado)" type="number" value={form.quotaGB} onChange={v => setForm({ ...form, quotaGB: v })} />
                   <Field label="Limite diário padrão (MB — 0 = sem limite)" type="number" value={form.dailyLimitMB} onChange={v => setForm({ ...form, dailyLimitMB: v })} />
                 </div>

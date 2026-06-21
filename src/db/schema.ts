@@ -22,7 +22,9 @@ export const users = pgTable("users", {
   role: roleEnum("role").notNull().default("user"),
   // Pacote
   packageName: text("package_name"),
+  packageDays: integer("package_days").notNull().default(30),
   packageExpiresAt: timestamp("package_expires_at"),
+  lastRenewedAt: timestamp("last_renewed_at"),
   // Quota total em bytes (0 = ilimitado)
   quotaBytes: bigint("quota_bytes", { mode: "number" }).notNull().default(0),
   consumedBytes: bigint("consumed_bytes", { mode: "number" }).notNull().default(0),

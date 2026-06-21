@@ -3,6 +3,7 @@ import { users, sessions } from "@/db/schema";
 import { eq, count, sum, desc } from "drizzle-orm";
 import { formatBytes } from "@/lib/utils";
 import Link from "next/link";
+import RenewButton from "./RenewButton";
 
 export const dynamic = "force-dynamic";
 
@@ -10,23 +11,71 @@ export default async function AdminDashboard() {
   const [totalUsers] = await db.select({ count: count() }).from(users).where(eq(users.role, "user"));
   const [activeUsers] = await db.select({ count: count() }).from(users).where(eq(users.active, true));
   const [totalConsumed] = await db.select({ sum: sum(users.consumedBytes) }).from(users);
+
+  const allUsers = await db
+    .select({
+      id: users.id,
+      username: users.username,
+      name: users.name,
+      consumedBytes: users.consumedBytes,
+      quotaBytes: users.quotaBytes,
+      packageName: users.packageName,
+      packageDays: users.packageDays,
+      packageExpiresAt: users.packageExpiresAt,
+      active: users.active,
+    })
+    .from(users)
+    .where(eq(users.role, "user"))
+    .orderBy(users.packageExpiresAt);
+
   const recentSessions = await db
     .select({ username: users.username, bytesIn: sessions.bytesIn, bytesOut: sessions.bytesOut, startedAt: sessions.startedAt, ip: sessions.ip })
     .from(sessions)
     .leftJoin(users, eq(sessions.userId, users.id))
     .orderBy(desc(sessions.startedAt))
-    .limit(8);
+    .limit(6);
 
-  const topConsumers = await db
-    .select({ username: users.username, name: users.name, consumedBytes: users.consumedBytes, quotaBytes: users.quotaBytes })
-    .from(users)
-    .where(eq(users.role, "user"))
-    .orderBy(desc(users.consumedBytes))
-    .limit(5);
+  const now = new Date();
+  const expiredOrSoon = allUsers.filter(u => {
+    if (!u.packageExpiresAt) return false;
+    const days = Math.ceil((new Date(u.packageExpiresAt).getTime() - now.getTime()) / 86400000);
+    return days <= 5;
+  });
+
+  const topConsumers = [...allUsers].sort((a, b) => b.consumedBytes - a.consumedBytes).slice(0, 5);
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+
+      {/* Alertas de vencimento */}
+      {expiredOrSoon.length > 0 && (
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p className="text-sm font-semibold text-amber-800 mb-3">
+            Pacotes vencidos ou vencendo em breve ({expiredOrSoon.length})
+          </p>
+          <div className="space-y-2">
+            {expiredOrSoon.map(u => {
+              const days = u.packageExpiresAt
+                ? Math.ceil((new Date(u.packageExpiresAt).getTime() - now.getTime()) / 86400000)
+                : null;
+              const expired = days !== null && days <= 0;
+              return (
+                <div key={u.id} className="flex items-center justify-between bg-white rounded-lg px-4 py-2.5 border border-amber-100">
+                  <div>
+                    <span className="font-medium text-gray-900 text-sm">{u.username}</span>
+                    {u.name && <span className="text-gray-400 text-xs ml-2">{u.name}</span>}
+                    <span className={`ml-2 text-xs font-medium px-2 py-0.5 rounded-full ${expired ? "bg-red-100 text-red-600" : "bg-yellow-100 text-yellow-700"}`}>
+                      {expired ? `Expirou há ${Math.abs(days!)} dia(s)` : `Vence em ${days} dia(s)`}
+                    </span>
+                  </div>
+                  <RenewButton userId={u.id} username={u.username} packageDays={u.packageDays} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -51,7 +100,7 @@ export default async function AdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {topConsumers.map((u) => (
+              {topConsumers.map(u => (
                 <tr key={u.username} className="border-b border-gray-50 last:border-0">
                   <td className="py-2 text-gray-700">{u.name ?? u.username}</td>
                   <td className="py-2 text-right text-gray-600">{formatBytes(u.consumedBytes)}</td>

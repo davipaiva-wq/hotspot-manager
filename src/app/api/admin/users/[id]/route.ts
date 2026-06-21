@@ -23,6 +23,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.name !== undefined) updates.name = body.name;
   if (body.mac !== undefined) updates.mac = body.mac;
   if (body.packageName !== undefined) updates.packageName = body.packageName;
+  if (body.packageDays !== undefined) updates.packageDays = body.packageDays;
   if (body.packageExpiresAt !== undefined)
     updates.packageExpiresAt = body.packageExpiresAt ? new Date(body.packageExpiresAt) : null;
   if (body.quotaBytes !== undefined) updates.quotaBytes = body.quotaBytes;
