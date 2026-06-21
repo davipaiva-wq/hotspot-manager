@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { formatBytes } from "@/lib/utils";
 
@@ -16,6 +16,18 @@ interface Profile {
 }
 
 export default function HotspotConectar() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <p className="text-gray-500 text-sm">Carregando...</p>
+      </div>
+    }>
+      <ConectarInner />
+    </Suspense>
+  );
+}
+
+function ConectarInner() {
   const params = useSearchParams();
   const router = useRouter();
   const link = params.get("link") ?? "";
