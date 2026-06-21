@@ -21,8 +21,7 @@ export async function GET() {
       .select()
       .from(sessions)
       .where(eq(sessions.userId, userId))
-      .orderBy(desc(sessions.startedAt))
-      .limit(20),
+      .orderBy(desc(sessions.startedAt)),
   ]);
 
   return NextResponse.json({ daily: usage, sessions: history });

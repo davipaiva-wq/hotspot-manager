@@ -4,74 +4,89 @@ import { useEffect, useState } from "react";
 import { formatBytes, formatDate } from "@/lib/utils";
 
 interface DailyRow { date: string; bytesTotal: number; }
-interface SessionRow { id: number; ip: string; bytesIn: number; bytesOut: number; startedAt: string; endedAt: string | null; }
+interface SessionRow { id: number; ip: string; bytesIn: number; bytesOut: number; startedAt: string; }
 
 export default function HistoryPage() {
   const [daily, setDaily] = useState<DailyRow[]>([]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"sessions" | "daily">("sessions");
 
   useEffect(() => {
     fetch("/api/user/history")
       .then((r) => r.json())
-      .then((d) => { setDaily(d.daily); setSessions(d.sessions); setLoading(false); });
+      .then((d) => { setDaily(d.daily ?? []); setSessions(d.sessions ?? []); setLoading(false); });
   }, []);
 
-  if (loading) return <p className="text-sm text-gray-500">Carregando...</p>;
+  if (loading) return <p className="text-sm text-gray-500 py-8 text-center">Carregando...</p>;
 
   return (
     <div>
-      <h1 className="text-xl font-bold text-gray-900 mb-6">Histórico de consumo</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-4">Histórico</h1>
 
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
-        <div className="px-5 py-3 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900 text-sm">Consumo diário (últimos 30 dias)</h2>
-        </div>
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Data</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {daily.length === 0 ? (
-              <tr><td colSpan={2} className="px-4 py-6 text-center text-gray-400 text-sm">Nenhum dado ainda</td></tr>
-            ) : daily.map((r) => (
-              <tr key={r.date} className="border-b border-gray-50 last:border-0">
-                <td className="px-4 py-2 text-gray-700">{r.date}</td>
-                <td className="px-4 py-2 text-right font-medium text-gray-800">{formatBytes(r.bytesTotal)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Tabs */}
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-5">
+        <button
+          onClick={() => setTab("sessions")}
+          className={`flex-1 text-sm font-medium rounded-lg py-2 transition-colors ${tab === "sessions" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+        >
+          Conexões ({sessions.length})
+        </button>
+        <button
+          onClick={() => setTab("daily")}
+          className={`flex-1 text-sm font-medium rounded-lg py-2 transition-colors ${tab === "daily" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+        >
+          Por dia ({daily.length})
+        </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-        <div className="px-5 py-3 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900 text-sm">Sessões recentes</h2>
+      {/* Sessões */}
+      {tab === "sessions" && (
+        <div className="space-y-2">
+          {sessions.length === 0 ? (
+            <p className="text-center text-gray-400 text-sm py-8">Nenhuma sessão registrada</p>
+          ) : sessions.map((s) => (
+            <div key={s.id} className="bg-white rounded-xl border border-gray-200 px-4 py-3">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-xs text-gray-400">{formatDate(s.startedAt)}</span>
+                <span className="text-xs text-gray-400 font-mono">{s.ip}</span>
+              </div>
+              <div className="flex gap-4">
+                <div>
+                  <p className="text-xs text-gray-400">Download</p>
+                  <p className="text-sm font-semibold text-blue-600">{formatBytes(s.bytesIn)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Upload</p>
+                  <p className="text-sm font-semibold text-gray-600">{formatBytes(s.bytesOut)}</p>
+                </div>
+                <div className="ml-auto text-right">
+                  <p className="text-xs text-gray-400">Total</p>
+                  <p className="text-sm font-bold text-gray-800">{formatBytes(s.bytesIn + s.bytesOut)}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Início</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">IP</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Download</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Upload</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sessions.map((s) => (
-              <tr key={s.id} className="border-b border-gray-50 last:border-0">
-                <td className="px-4 py-2 text-gray-600">{formatDate(s.startedAt)}</td>
-                <td className="px-4 py-2 text-gray-500">{s.ip}</td>
-                <td className="px-4 py-2 text-right text-gray-700">{formatBytes(s.bytesIn)}</td>
-                <td className="px-4 py-2 text-right text-gray-700">{formatBytes(s.bytesOut)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      )}
+
+      {/* Diário */}
+      {tab === "daily" && (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+          {daily.length === 0 ? (
+            <p className="text-center text-gray-400 text-sm py-8">Nenhum dado ainda</p>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {daily.map((r) => (
+                <div key={r.date} className="flex items-center justify-between px-4 py-3">
+                  <span className="text-sm text-gray-700">{r.date}</span>
+                  <span className="text-sm font-semibold text-gray-900">{formatBytes(r.bytesTotal)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
