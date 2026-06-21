@@ -18,7 +18,7 @@ export default async function PortalLayout({ children }: { children: React.React
           <Link href="/portal/history" className="text-gray-600 hover:text-gray-900">Histórico</Link>
           <Link href="/portal/password" className="text-gray-600 hover:text-gray-900">Senha</Link>
           <a
-            href="http://cns-mobi.com/logout"
+            href="http://192.168.85.2/logout"
             className="text-sm bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg px-3 py-1.5 font-medium transition-colors"
           >
             Desconectar WiFi
