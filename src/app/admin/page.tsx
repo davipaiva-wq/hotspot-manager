@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { users, sessions } from "@/db/schema";
-import { eq, count, sum, desc } from "drizzle-orm";
+import { eq, count, sum, desc, max, gte } from "drizzle-orm";
 import { formatBytes } from "@/lib/utils";
 import Link from "next/link";
 import RenewButton from "./RenewButton";
@@ -28,12 +28,22 @@ export default async function AdminDashboard() {
     .where(eq(users.role, "user"))
     .orderBy(desc(users.consumedBytes));
 
-  const recentSessions = await db
-    .select({ username: users.username, bytesIn: sessions.bytesIn, bytesOut: sessions.bytesOut, startedAt: sessions.startedAt, ip: sessions.ip })
+  const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+
+  const sessionsByUser = await db
+    .select({
+      username: users.username,
+      name: users.name,
+      connections: count(sessions.id),
+      bytesIn: sum(sessions.bytesIn),
+      bytesOut: sum(sessions.bytesOut),
+      lastSeen: max(sessions.startedAt),
+    })
     .from(sessions)
     .leftJoin(users, eq(sessions.userId, users.id))
-    .orderBy(desc(sessions.startedAt))
-    .limit(6);
+    .where(gte(sessions.startedAt, startOfMonth))
+    .groupBy(users.id, users.username, users.name)
+    .orderBy(desc(max(sessions.startedAt)));
 
   const now = new Date();
   const expiredOrSoon = allUsers.filter(u => {
@@ -109,23 +119,28 @@ export default async function AdminDashboard() {
           </table>
         </div>
 
-        {/* Sessões recentes */}
+        {/* Sessões por usuário no mês */}
         <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Sessões recentes</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-gray-900">Conexões no mês</h2>
+            <Link href="/admin/reports" className="text-sm text-blue-600 hover:underline">Ver relatório</Link>
+          </div>
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-gray-500 border-b border-gray-100">
                 <th className="pb-2 font-medium">Usuário</th>
-                <th className="pb-2 font-medium">IP</th>
+                <th className="pb-2 font-medium text-center">Sessões</th>
                 <th className="pb-2 font-medium text-right">Total</th>
               </tr>
             </thead>
             <tbody>
-              {recentSessions.map((s, i) => (
+              {sessionsByUser.length === 0 ? (
+                <tr><td colSpan={3} className="py-4 text-center text-gray-400">Nenhuma sessão este mês</td></tr>
+              ) : sessionsByUser.map((s, i) => (
                 <tr key={i} className="border-b border-gray-50 last:border-0">
-                  <td className="py-2 text-gray-700">{s.username}</td>
-                  <td className="py-2 text-gray-500">{s.ip}</td>
-                  <td className="py-2 text-right text-gray-600">{formatBytes(s.bytesIn + s.bytesOut)}</td>
+                  <td className="py-2 text-gray-700">{s.name ?? s.username}</td>
+                  <td className="py-2 text-center text-gray-400">{s.connections}x</td>
+                  <td className="py-2 text-right text-gray-600">{formatBytes(Number(s.bytesIn ?? 0) + Number(s.bytesOut ?? 0))}</td>
                 </tr>
               ))}
             </tbody>
