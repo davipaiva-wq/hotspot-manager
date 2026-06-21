@@ -75,13 +75,22 @@ export async function POST(req: NextRequest) {
       const prevTotal = existing.bytesIn + existing.bytesOut;
       const delta = totalBytes - prevTotal;
 
-      // Negative delta means MikroTik reused the same session ID for a new session
-      // (bytes restarted from 0). Treat it as a fresh session.
+      // Negative delta means MikroTik reused the same session ID for a new session.
+      // Archive the old record (rename its sessionId) and create a fresh one.
       if (delta < 0) {
         await db
           .update(sessions)
-          .set({ bytesIn: s.bytesIn, bytesOut: s.bytesOut, startedAt: new Date() })
+          .set({ sessionId: existing.sessionId + "__" + existing.id })
           .where(eq(sessions.id, existing.id));
+
+        await db.insert(sessions).values({
+          userId: user.id,
+          sessionId: s.sessionId,
+          ip: s.ip,
+          mac: s.mac,
+          bytesIn: s.bytesIn,
+          bytesOut: s.bytesOut,
+        });
 
         if (totalBytes > 0) {
           await db
