@@ -54,11 +54,11 @@ export default function HistoryPage() {
               <div className="flex gap-4">
                 <div>
                   <p className="text-xs text-gray-400">Download</p>
-                  <p className="text-sm font-semibold text-blue-600">{formatBytes(s.bytesIn)}</p>
+                  <p className="text-sm font-semibold text-blue-600">{formatBytes(s.bytesOut)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400">Upload</p>
-                  <p className="text-sm font-semibold text-gray-600">{formatBytes(s.bytesOut)}</p>
+                  <p className="text-sm font-semibold text-gray-600">{formatBytes(s.bytesIn)}</p>
                 </div>
                 <div className="ml-auto text-right">
                   <p className="text-xs text-gray-400">Total</p>

@@ -148,8 +148,8 @@ export default function ReportsPage() {
                   <td className="px-4 py-2 text-gray-700">{s.username}</td>
                   <td className="px-4 py-2 text-gray-500">{s.ip}</td>
                   <td className="px-4 py-2 text-gray-400 text-xs">{s.mac}</td>
-                  <td className="px-4 py-2 text-gray-600">{formatBytes(s.bytesIn)}</td>
                   <td className="px-4 py-2 text-gray-600">{formatBytes(s.bytesOut)}</td>
+                  <td className="px-4 py-2 text-gray-600">{formatBytes(s.bytesIn)}</td>
                   <td className="px-4 py-2 font-medium text-gray-800">{formatBytes(s.bytesIn + s.bytesOut)}</td>
                   <td className="px-4 py-2 text-gray-400">{formatDate(s.startedAt)}</td>
                 </tr>
