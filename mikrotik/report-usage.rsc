@@ -1,17 +1,11 @@
 # ============================================================
 # Script MikroTik RouterOS 7.x — Envia consumo para Hotspot Manager
-# RB760iGS testado em 7.12.1
+# RB760iGS — RouterOS 7.12.1
 #
-# Como instalar:
-#   /system scheduler add name=hotspot-report interval=00:05:00 \
-#     on-event=[/system script get [find name=hotspot-report] source]
-#
-# Ou cole diretamente no campo on-event do scheduler.
-#
-# EDITE ESTAS DUAS LINHAS:
-:local apiUrl "https://SEU-APP.vercel.app/api/mikrotik/usage"
-:local apiKey "SUA_CHAVE_AQUI"
+# Instalar como script e configurar scheduler para chamar a cada 5 min.
 # ============================================================
+:local apiUrl "https://hotspot-manager-delta.vercel.app/api/mikrotik/usage"
+:local apiKey "SUA_MIKROTIK_API_KEY_AQUI"
 
 :local jsonBody "{\"sessions\":["
 :local first true

@@ -8,7 +8,7 @@
 // O MikroTik substitui as variáveis $(xxx) antes de servir a página.
 //
 // EDITE A LINHA ABAIXO com a URL do seu app Vercel:
-var externalLogin = "https://SEU-APP.vercel.app/hotspot/login";
+var externalLogin = "https://hotspot-manager-delta.vercel.app/hotspot/login";
 
 var params = new URLSearchParams({
   "link-login-only": "$(link-login-only)",
@@ -17,6 +17,9 @@ var params = new URLSearchParams({
   "mac":             "$(mac)"
 });
 
+var dst = "$(link-orig-esc)";
+if (!dst || dst === "$(link-orig-esc)") dst = "https://hotspot-manager-delta.vercel.app/portal";
+params.set("dst", dst);
 window.location.replace(externalLogin + "?" + params.toString());
 </script>
 </head>

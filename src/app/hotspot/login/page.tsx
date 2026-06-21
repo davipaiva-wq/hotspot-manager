@@ -101,7 +101,6 @@ export default async function HotspotLogin({
   }
   loginUrl.searchParams.set("username", mkUser);
   loginUrl.searchParams.set("password", mkPass);
-  if (dst) loginUrl.searchParams.set("dst", dst);
 
   redirect(loginUrl.toString());
 }
