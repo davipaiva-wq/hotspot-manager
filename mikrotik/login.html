@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Redirecionando...</title>
+<script>
+// Este arquivo fica em: Files > hotspot > login.html no MikroTik
+// O MikroTik substitui as variáveis $(xxx) antes de servir a página.
+//
+// EDITE A LINHA ABAIXO com a URL do seu app Vercel:
+var externalLogin = "https://SEU-APP.vercel.app/hotspot/login";
+
+var params = new URLSearchParams({
+  "link-login-only": "$(link-login-only)",
+  "dst":             "$(link-orig-esc)",
+  "ip":              "$(ip)",
+  "mac":             "$(mac)"
+});
+
+window.location.replace(externalLogin + "?" + params.toString());
+</script>
+</head>
+<body>
+<p style="font-family:sans-serif;color:#666;text-align:center;margin-top:20%">
+  Redirecionando para o login...
+</p>
+</body>
+</html>
