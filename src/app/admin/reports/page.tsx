@@ -7,12 +7,11 @@ interface DailyRow { date: string; bytesTotal: number; username: string; name: s
 interface SessionRow { id: number; username: string; ip: string; mac: string; bytesIn: number; bytesOut: number; startedAt: string; endedAt: string | null; }
 
 export default function ReportsPage() {
-  const [from, setFrom] = useState(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - 7);
-    return d.toISOString().slice(0, 10);
-  });
-  const [to, setTo] = useState(() => new Date().toISOString().slice(0, 10));
+  const today = new Date().toISOString().slice(0, 10);
+  const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
+
+  const [from, setFrom] = useState(firstOfMonth);
+  const [to, setTo] = useState(today);
   const [daily, setDaily] = useState<DailyRow[]>([]);
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -21,8 +20,8 @@ export default function ReportsPage() {
     setLoading(true);
     const res = await fetch(`/api/admin/reports?from=${from}&to=${to}`);
     const data = await res.json();
-    setDaily(data.usage);
-    setSessions(data.sessions);
+    setDaily(data.usage ?? []);
+    setSessions(data.sessions ?? []);
     setLoading(false);
   }
 
@@ -40,6 +39,14 @@ export default function ReportsPage() {
     URL.revokeObjectURL(url);
   }
 
+  // Agrupar consumo diário por usuário para resumo
+  const byUser: Record<string, { username: string; name: string | null; total: number }> = {};
+  for (const r of daily) {
+    if (!byUser[r.username]) byUser[r.username] = { username: r.username, name: r.name, total: 0 };
+    byUser[r.username].total += r.bytesTotal;
+  }
+  const userSummary = Object.values(byUser).sort((a, b) => b.total - a.total);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -49,7 +56,7 @@ export default function ReportsPage() {
         </button>
       </div>
 
-      {/* Filters */}
+      {/* Filtros */}
       <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap gap-4 items-end">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">De</label>
@@ -64,10 +71,37 @@ export default function ReportsPage() {
         </button>
       </div>
 
-      {/* Daily usage */}
+      {/* Resumo por usuário no período */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
         <div className="px-5 py-3 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900 text-sm">Consumo por dia</h2>
+          <h2 className="font-semibold text-gray-900 text-sm">Consumo por usuário no período</h2>
+        </div>
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50">
+            <tr>
+              {["Usuário", "Nome", "Total no período"].map((h) => (
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {userSummary.length === 0 ? (
+              <tr><td colSpan={3} className="px-4 py-6 text-center text-gray-400 text-sm">Nenhum dado para o período</td></tr>
+            ) : userSummary.map((u, i) => (
+              <tr key={i} className="border-b border-gray-50 last:border-0">
+                <td className="px-4 py-2 font-medium text-gray-800">{u.username}</td>
+                <td className="px-4 py-2 text-gray-500">{u.name ?? "—"}</td>
+                <td className="px-4 py-2 font-semibold text-blue-700">{formatBytes(u.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Consumo por dia detalhado */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-6">
+        <div className="px-5 py-3 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-900 text-sm">Consumo diário detalhado</h2>
         </div>
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
@@ -92,32 +126,37 @@ export default function ReportsPage() {
         </table>
       </div>
 
-      {/* Sessions */}
+      {/* Todas as sessões */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-900 text-sm">Sessões recentes (últimas 100)</h2>
+          <h2 className="font-semibold text-gray-900 text-sm">Todas as sessões ({sessions.length})</h2>
         </div>
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              {["Usuário", "IP", "Download", "Upload", "Total", "Início"].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sessions.map((s) => (
-              <tr key={s.id} className="border-b border-gray-50 last:border-0">
-                <td className="px-4 py-2 text-gray-700">{s.username}</td>
-                <td className="px-4 py-2 text-gray-500">{s.ip}</td>
-                <td className="px-4 py-2 text-gray-600">{formatBytes(s.bytesIn)}</td>
-                <td className="px-4 py-2 text-gray-600">{formatBytes(s.bytesOut)}</td>
-                <td className="px-4 py-2 font-medium text-gray-800">{formatBytes(s.bytesIn + s.bytesOut)}</td>
-                <td className="px-4 py-2 text-gray-400">{formatDate(s.startedAt)}</td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50">
+              <tr>
+                {["Usuário", "IP", "MAC", "Download", "Upload", "Total", "Início"].map((h) => (
+                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {sessions.length === 0 ? (
+                <tr><td colSpan={7} className="px-4 py-6 text-center text-gray-400 text-sm">Nenhuma sessão no período</td></tr>
+              ) : sessions.map((s) => (
+                <tr key={s.id} className="border-b border-gray-50 last:border-0">
+                  <td className="px-4 py-2 text-gray-700">{s.username}</td>
+                  <td className="px-4 py-2 text-gray-500">{s.ip}</td>
+                  <td className="px-4 py-2 text-gray-400 text-xs">{s.mac}</td>
+                  <td className="px-4 py-2 text-gray-600">{formatBytes(s.bytesIn)}</td>
+                  <td className="px-4 py-2 text-gray-600">{formatBytes(s.bytesOut)}</td>
+                  <td className="px-4 py-2 font-medium text-gray-800">{formatBytes(s.bytesIn + s.bytesOut)}</td>
+                  <td className="px-4 py-2 text-gray-400">{formatDate(s.startedAt)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
