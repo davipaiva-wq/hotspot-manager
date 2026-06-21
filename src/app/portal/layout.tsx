@@ -17,8 +17,14 @@ export default async function PortalLayout({ children }: { children: React.React
           <Link href="/portal" className="text-gray-600 hover:text-gray-900 font-medium">Meu Pacote</Link>
           <Link href="/portal/history" className="text-gray-600 hover:text-gray-900">Histórico</Link>
           <Link href="/portal/password" className="text-gray-600 hover:text-gray-900">Senha</Link>
+          <a
+            href="http://cns-mobi.com/logout"
+            className="text-sm bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg px-3 py-1.5 font-medium transition-colors"
+          >
+            Desconectar WiFi
+          </a>
           <form action={async () => { "use server"; await signOut({ redirectTo: "/login" }); }}>
-            <button type="submit" className="text-gray-400 hover:text-gray-700">Sair</button>
+            <button type="submit" className="text-gray-400 hover:text-gray-700 text-sm">Sair</button>
           </form>
         </nav>
       </header>
