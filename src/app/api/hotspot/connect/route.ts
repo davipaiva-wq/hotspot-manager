@@ -15,8 +15,6 @@ export async function GET(req: NextRequest) {
     const u = new URL(link);
     u.searchParams.set("username", mkUser);
     u.searchParams.set("password", mkPass);
-    // Remove original dst so MikroTik falls through to status.html → portal
-    u.searchParams.delete("dst");
     target = u.toString();
   } catch {
     target = `http://192.168.85.2/login?username=${mkUser}&password=${mkPass}`;
