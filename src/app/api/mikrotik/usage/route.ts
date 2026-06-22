@@ -63,6 +63,8 @@ export async function POST(req: NextRequest) {
     }
 
     const totalBytes = s.bytesIn + s.bytesOut;
+    let newConsumed = user.consumedBytes;
+    let newDailyConsumed = user.dailyConsumedBytes;
 
     // Upsert session record
     const [existing] = await db
@@ -93,11 +95,14 @@ export async function POST(req: NextRequest) {
         });
 
         if (totalBytes > 0) {
+          newConsumed = user.consumedBytes + totalBytes;
+          newDailyConsumed = user.dailyConsumedBytes + totalBytes;
+
           await db
             .update(users)
             .set({
-              consumedBytes: user.consumedBytes + totalBytes,
-              dailyConsumedBytes: user.dailyConsumedBytes + totalBytes,
+              consumedBytes: newConsumed,
+              dailyConsumedBytes: newDailyConsumed,
               updatedAt: new Date(),
             })
             .where(eq(users.id, user.id));
@@ -115,6 +120,9 @@ export async function POST(req: NextRequest) {
           }
         }
       } else if (delta > 0) {
+        newConsumed = user.consumedBytes + delta;
+        newDailyConsumed = user.dailyConsumedBytes + delta;
+
         await db
           .update(sessions)
           .set({ bytesIn: s.bytesIn, bytesOut: s.bytesOut })
@@ -123,8 +131,8 @@ export async function POST(req: NextRequest) {
         await db
           .update(users)
           .set({
-            consumedBytes: user.consumedBytes + delta,
-            dailyConsumedBytes: user.dailyConsumedBytes + delta,
+            consumedBytes: newConsumed,
+            dailyConsumedBytes: newDailyConsumed,
             updatedAt: new Date(),
           })
           .where(eq(users.id, user.id));
@@ -145,6 +153,9 @@ export async function POST(req: NextRequest) {
         }
       }
     } else {
+      newConsumed = user.consumedBytes + totalBytes;
+      newDailyConsumed = user.dailyConsumedBytes + totalBytes;
+
       await db.insert(sessions).values({
         userId: user.id,
         sessionId: s.sessionId,
@@ -157,14 +168,19 @@ export async function POST(req: NextRequest) {
       await db
         .update(users)
         .set({
-          consumedBytes: user.consumedBytes + totalBytes,
-          dailyConsumedBytes: user.dailyConsumedBytes + totalBytes,
+          consumedBytes: newConsumed,
+          dailyConsumedBytes: newDailyConsumed,
           updatedAt: new Date(),
         })
         .where(eq(users.id, user.id));
     }
 
-    results.push({ mac: s.mac, username: user.username, status: "ok" });
+    const quotaExceeded = user.quotaBytes > 0 && newConsumed >= user.quotaBytes;
+    const dailyExceeded = user.dailyLimitBytes > 0 && newDailyConsumed >= user.dailyLimitBytes;
+    const packageExpired = user.packageExpiresAt != null && new Date(user.packageExpiresAt) < new Date();
+
+    const status = (quotaExceeded || dailyExceeded || packageExpired) ? "disconnect" : "ok";
+    results.push({ mac: s.mac, username: user.username, status });
   }
 
   return NextResponse.json({ updated: results });
