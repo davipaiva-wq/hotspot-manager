@@ -29,6 +29,16 @@ export default function PortalHome() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (!profile) return;
+    const esgotado =
+      (profile.quotaBytes > 0 && profile.consumedBytes >= profile.quotaBytes) ||
+      (profile.dailyLimitBytes > 0 && profile.dailyConsumedBytes >= profile.dailyLimitBytes);
+    if (esgotado) {
+      window.location.href = "http://192.168.85.2/logout";
+    }
+  }, [profile]);
+
   async function saveLimit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -69,16 +79,10 @@ export default function PortalHome() {
       {quotaEsgotada && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
           <p className="font-bold text-red-700 mb-1">Limite de dados esgotado</p>
-          <p className="text-sm text-red-600 mb-4">
+          <p className="text-sm text-red-600">
             Você utilizou {formatBytes(profile.consumedBytes)} de {formatBytes(profile.quotaBytes)}.
-            Desconecte-se agora — enquanto conectado, o tráfego pode continuar sendo contabilizado.
+            Você foi desconectado automaticamente do WiFi.
           </p>
-          <a
-            href="http://192.168.85.2/logout"
-            className="inline-block bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg px-5 py-2.5 transition-colors"
-          >
-            Desconectar WiFi agora
-          </a>
         </div>
       )}
 
@@ -97,16 +101,10 @@ export default function PortalHome() {
       {diarioEsgotado && (
         <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5">
           <p className="font-bold text-orange-700 mb-1">Limite diário atingido</p>
-          <p className="text-sm text-orange-600 mb-4">
+          <p className="text-sm text-orange-600">
             Você usou {formatBytes(profile.dailyConsumedBytes)} de {formatBytes(profile.dailyLimitBytes)} hoje.
-            O acesso será liberado automaticamente à meia-noite. Se quiser se desconectar agora:
+            Você foi desconectado automaticamente. O acesso volta à meia-noite.
           </p>
-          <a
-            href="http://192.168.85.2/logout"
-            className="inline-block bg-orange-600 hover:bg-orange-700 text-white text-sm font-semibold rounded-lg px-5 py-2.5 transition-colors"
-          >
-            Desconectar WiFi agora
-          </a>
         </div>
       )}
 
