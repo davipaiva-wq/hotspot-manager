@@ -4,6 +4,7 @@ import { eq, count, sum, desc, max, gte, isNotNull } from "drizzle-orm";
 import { formatBytes } from "@/lib/utils";
 import Link from "next/link";
 import RenewButton from "./RenewButton";
+import AutoRefresh from "./AutoRefresh";
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +68,7 @@ export default async function AdminDashboard() {
 
   return (
     <div>
+      <AutoRefresh interval={30000} />
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
 
       {/* Alertas de vencimento */}

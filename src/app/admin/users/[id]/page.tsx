@@ -80,7 +80,12 @@ export default function UserDetailPage() {
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    fetch(`/api/admin/users/${id}/stats`).then(r => r.json()).then(setStats);
+    function load() {
+      fetch(`/api/admin/users/${id}/stats`).then(r => r.json()).then(setStats);
+    }
+    load();
+    const id_ = setInterval(load, 30000);
+    return () => clearInterval(id_);
   }, [id]);
 
   if (!stats) return <p className="text-sm text-gray-400">Carregando...</p>;
