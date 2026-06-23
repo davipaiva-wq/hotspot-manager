@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
             .set({
               consumedBytes: newConsumed,
               dailyConsumedBytes: newDailyConsumed,
+              lastSeenAt: new Date(),
               updatedAt: new Date(),
             })
             .where(eq(users.id, user.id));
@@ -133,6 +134,7 @@ export async function POST(req: NextRequest) {
           .set({
             consumedBytes: newConsumed,
             dailyConsumedBytes: newDailyConsumed,
+            lastSeenAt: new Date(),
             updatedAt: new Date(),
           })
           .where(eq(users.id, user.id));
@@ -170,6 +172,7 @@ export async function POST(req: NextRequest) {
         .set({
           consumedBytes: newConsumed,
           dailyConsumedBytes: newDailyConsumed,
+          lastSeenAt: new Date(),
           updatedAt: new Date(),
         })
         .where(eq(users.id, user.id));

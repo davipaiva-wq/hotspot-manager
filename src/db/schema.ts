@@ -33,6 +33,7 @@ export const users = pgTable("users", {
   dailyConsumedBytes: bigint("daily_consumed_bytes", { mode: "number" }).notNull().default(0),
   dailyResetAt: timestamp("daily_reset_at"),
   active: boolean("active").notNull().default(true),
+  lastSeenAt: timestamp("last_seen_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

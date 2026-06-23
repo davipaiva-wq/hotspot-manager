@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { users, sessions } from "@/db/schema";
-import { eq, count, sum, desc, max, gte } from "drizzle-orm";
+import { eq, count, sum, desc, max, gte, isNotNull } from "drizzle-orm";
 import { formatBytes } from "@/lib/utils";
 import Link from "next/link";
 import RenewButton from "./RenewButton";
@@ -45,6 +45,19 @@ export default async function AdminDashboard() {
     .groupBy(users.id, users.username, users.name)
     .orderBy(desc(max(sessions.startedAt)));
 
+  const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
+  const onlineUsers = await db
+    .select({
+      username: users.username,
+      name: users.name,
+      lastSeenAt: users.lastSeenAt,
+      consumedBytes: users.consumedBytes,
+      quotaBytes: users.quotaBytes,
+    })
+    .from(users)
+    .where(gte(users.lastSeenAt, twoMinutesAgo))
+    .orderBy(desc(users.lastSeenAt));
+
   const now = new Date();
   const expiredOrSoon = allUsers.filter(u => {
     if (!u.packageExpiresAt) return false;
@@ -86,11 +99,30 @@ export default async function AdminDashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
         <StatCard label="Total de usuários" value={String(totalUsers.count)} />
         <StatCard label="Usuários ativos" value={String(activeUsers.count)} />
+        <StatCard label="Online agora" value={String(onlineUsers.length)} highlight={onlineUsers.length > 0} />
         <StatCard label="Consumo total" value={formatBytes(Number(totalConsumed.sum ?? 0))} />
       </div>
+
+      {/* Online agora */}
+      {onlineUsers.length > 0 && (
+        <div className="mb-6 bg-green-50 border border-green-200 rounded-xl p-5">
+          <p className="text-sm font-semibold text-green-800 mb-3">
+            Online agora ({onlineUsers.length})
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {onlineUsers.map(u => (
+              <div key={u.username} className="flex items-center gap-2 bg-white border border-green-100 rounded-lg px-3 py-2">
+                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm font-medium text-gray-900">{u.name ?? u.username}</span>
+                <span className="text-xs text-gray-400">{formatBytes(u.consumedBytes)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Todos os usuários por consumo */}
@@ -151,11 +183,11 @@ export default async function AdminDashboard() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+    <div className={`rounded-xl border p-5 ${highlight ? "bg-green-50 border-green-200" : "bg-white border-gray-200"}`}>
+      <p className={`text-sm ${highlight ? "text-green-700" : "text-gray-500"}`}>{label}</p>
+      <p className={`text-2xl font-bold mt-1 ${highlight ? "text-green-800" : "text-gray-900"}`}>{value}</p>
     </div>
   );
 }
