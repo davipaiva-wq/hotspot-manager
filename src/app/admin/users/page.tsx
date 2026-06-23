@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { formatBytes, percentUsed } from "@/lib/utils";
 
 interface User {
@@ -25,6 +26,7 @@ const emptyForm = {
 };
 
 export default function UsersPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -186,6 +188,7 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-2 flex-wrap">
+                        <button onClick={() => router.push(`/admin/users/${u.id}`)} className="text-xs text-purple-600 hover:underline font-medium">Ver</button>
                         <button onClick={() => openEdit(u)} className="text-xs text-blue-600 hover:underline">Editar</button>
                         <button onClick={() => renew(u)} className="text-xs text-green-600 hover:underline font-medium">Renovar</button>
                         <button onClick={() => toggleActive(u)} className="text-xs text-yellow-600 hover:underline">{u.active ? "Bloquear" : "Ativar"}</button>
