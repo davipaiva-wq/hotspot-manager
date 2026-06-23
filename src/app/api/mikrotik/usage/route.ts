@@ -153,6 +153,9 @@ export async function POST(req: NextRequest) {
         } else {
           await db.insert(dailyUsage).values({ userId: user.id, date: today, bytesTotal: delta });
         }
+      } else {
+        // delta === 0: usuário online mas sem novos bytes — só atualiza lastSeenAt
+        await db.update(users).set({ lastSeenAt: new Date() }).where(eq(users.id, user.id));
       }
     } else {
       newConsumed = user.consumedBytes + totalBytes;
