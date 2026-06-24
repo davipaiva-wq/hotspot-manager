@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { formatBytes } from "@/lib/utils";
+import UsageBarChart from "@/components/UsageBarChart";
 
 interface UserDetail {
   id: number;
@@ -41,38 +42,6 @@ interface Stats {
   daily: DailyUsage[];
 }
 
-function BarChart({ data }: { data: DailyUsage[] }) {
-  if (data.length === 0) return <p className="text-sm text-gray-400 text-center py-6">Sem dados de uso diário.</p>;
-
-  const max = Math.max(...data.map(d => d.bytesTotal), 1);
-
-  return (
-    <div className="overflow-x-auto">
-      <div className="flex items-end gap-1.5 h-40 min-w-max px-1">
-        {data.map(d => {
-          const pct = (d.bytesTotal / max) * 100;
-          return (
-            <div key={d.date} className="flex flex-col items-center gap-1 group">
-              <div className="relative">
-                <div className="hidden group-hover:block absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10">
-                  {formatBytes(d.bytesTotal)}
-                </div>
-              </div>
-              <div
-                className="w-7 bg-blue-500 rounded-t transition-all hover:bg-blue-600"
-                style={{ height: `${Math.max(pct, 2)}%` }}
-                title={formatBytes(d.bytesTotal)}
-              />
-              <span className="text-xs text-gray-400 rotate-45 origin-left w-7 truncate">
-                {d.date.slice(5)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function UserDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -162,7 +131,7 @@ export default function UserDetailPage() {
       {/* Gráfico de uso diário */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h2 className="font-semibold text-gray-900 mb-4">Consumo diário (últimos 30 dias)</h2>
-        <BarChart data={daily} />
+        <UsageBarChart data={daily} />
       </div>
 
       {/* Sessões */}

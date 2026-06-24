@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatBytes, percentUsed } from "@/lib/utils";
+import UsageBarChart from "@/components/UsageBarChart";
 
 interface Profile {
   username: string;
@@ -14,16 +15,24 @@ interface Profile {
   dailyConsumedBytes: number;
 }
 
+interface DayData { date: string; bytesTotal: number; }
+
 export default function PortalHome() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [daily, setDaily] = useState<DayData[]>([]);
   const [dailyMB, setDailyMB] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState({ text: "", ok: false });
 
   async function load() {
-    const res = await fetch("/api/user/profile");
-    const data = await res.json();
+    const [profileRes, historyRes] = await Promise.all([
+      fetch("/api/user/profile"),
+      fetch("/api/user/history"),
+    ]);
+    const data = await profileRes.json();
+    const history = await historyRes.json();
     setProfile(data);
+    setDaily((history.daily ?? []).slice().reverse());
     setDailyMB(data.dailyLimitBytes > 0 ? String(data.dailyLimitBytes / 1048576) : "");
   }
 
@@ -123,6 +132,14 @@ export default function PortalHome() {
           </div>
         </div>
       )}
+      {/* Gráfico de consumo diário */}
+      {daily.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+          <h2 className="font-semibold text-gray-900 mb-4">Consumo diário</h2>
+          <UsageBarChart data={daily} />
+        </div>
+      )}
+
       <div>
         <h1 className="text-xl font-bold text-gray-900">Meu Pacote</h1>
         <p className="text-sm text-gray-500 mt-0.5">Acompanhe seu plano e consumo de dados</p>

@@ -1,10 +1,11 @@
 import { db } from "@/db";
-import { users, sessions } from "@/db/schema";
+import { users, sessions, dailyUsage } from "@/db/schema";
 import { eq, count, sum, desc, max, gte, isNotNull } from "drizzle-orm";
 import { formatBytes } from "@/lib/utils";
 import Link from "next/link";
 import RenewButton from "./RenewButton";
 import AutoRefresh from "./AutoRefresh";
+import UsageBarChart from "@/components/UsageBarChart";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,17 @@ export default async function AdminDashboard() {
     .where(gte(sessions.startedAt, startOfMonth))
     .groupBy(users.id, users.username, users.name)
     .orderBy(desc(max(sessions.startedAt)));
+
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+
+  const totalByDay = await db
+    .select({ date: dailyUsage.date, bytesTotal: sum(dailyUsage.bytesTotal) })
+    .from(dailyUsage)
+    .where(gte(dailyUsage.date, thirtyDaysAgoStr))
+    .groupBy(dailyUsage.date)
+    .orderBy(dailyUsage.date);
 
   const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
   const onlineUsers = await db
@@ -123,6 +135,17 @@ export default async function AdminDashboard() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Gráfico total diário */}
+      {totalByDay.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+          <h2 className="font-semibold text-gray-900 mb-4">Consumo total da rede por dia</h2>
+          <UsageBarChart
+            data={totalByDay.map(d => ({ date: d.date, bytesTotal: Number(d.bytesTotal ?? 0) }))}
+            color="indigo"
+          />
         </div>
       )}
 
