@@ -68,7 +68,7 @@ export default async function AdminDashboard() {
 
   return (
     <div>
-      <AutoRefresh interval={30000} />
+      <AutoRefresh interval={10000} />
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
 
       {/* Alertas de vencimento */}

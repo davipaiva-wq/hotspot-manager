@@ -84,7 +84,7 @@ export default function UserDetailPage() {
       fetch(`/api/admin/users/${id}/stats`).then(r => r.json()).then(setStats);
     }
     load();
-    const id_ = setInterval(load, 30000);
+    const id_ = setInterval(load, 10000);
     return () => clearInterval(id_);
   }, [id]);
 
