@@ -4,6 +4,7 @@ import { eq, count, sum, desc, max, gte, isNotNull } from "drizzle-orm";
 import { formatBytes } from "@/lib/utils";
 import Link from "next/link";
 import RenewButton from "./RenewButton";
+import DisconnectButton from "./DisconnectButton";
 import AutoRefresh from "./AutoRefresh";
 import UsageBarChart from "@/components/UsageBarChart";
 
@@ -65,6 +66,7 @@ export default async function AdminDashboard() {
   const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
   const onlineUsers = await db
     .select({
+      id: users.id,
       username: users.username,
       name: users.name,
       lastSeenAt: users.lastSeenAt,
@@ -136,6 +138,7 @@ export default async function AdminDashboard() {
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-sm font-medium text-gray-900">{u.name ?? u.username}</span>
                 <span className="text-xs text-gray-400">{formatBytes(u.consumedBytes)}</span>
+                <DisconnectButton userId={u.id} username={u.name ?? u.username} />
               </div>
             ))}
           </div>

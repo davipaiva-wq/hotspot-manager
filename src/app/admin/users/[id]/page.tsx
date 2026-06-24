@@ -98,15 +98,13 @@ export default function UserDetailPage() {
           </div>
           <p className="text-sm text-gray-500 mt-0.5">@{user.username}</p>
         </div>
-        {isOnline && (
-          <button
-            onClick={handleDisconnect}
-            disabled={disconnecting}
-            className="text-sm font-medium bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 disabled:opacity-50 px-4 py-2 rounded-lg transition-colors"
-          >
-            {disconnecting ? "Desconectando..." : "Desconectar"}
-          </button>
-        )}
+        <button
+          onClick={handleDisconnect}
+          disabled={disconnecting}
+          className="text-sm font-medium bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 disabled:opacity-50 px-4 py-2 rounded-lg transition-colors"
+        >
+          {disconnecting ? "Desconectando..." : "Desconectar"}
+        </button>
       </div>
 
       {/* Info cards */}
