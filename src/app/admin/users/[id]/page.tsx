@@ -12,6 +12,8 @@ interface UserDetail {
   mac: string | null;
   packageName: string | null;
   packageExpiresAt: string | null;
+  packageDays: number;
+  lastRenewedAt: string | null;
   quotaBytes: number;
   consumedBytes: number;
   dailyLimitBytes: number;
@@ -130,8 +132,14 @@ export default function UserDetailPage() {
 
       {/* Gráfico de uso diário */}
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="font-semibold text-gray-900 mb-4">Consumo diário (últimos 30 dias)</h2>
-        <UsageBarChart data={daily} />
+        <h2 className="font-semibold text-gray-900 mb-4">Consumo diário</h2>
+        {(() => {
+          const chartTo = user.packageExpiresAt ? user.packageExpiresAt.slice(0, 10) : undefined;
+          const chartFrom = user.lastSeenAt && chartTo
+            ? new Date(new Date(chartTo).getTime() - (user.packageDays ?? 30) * 86400000).toISOString().split("T")[0]
+            : undefined;
+          return <UsageBarChart data={daily} from={chartFrom} to={chartTo} />;
+        })()}
       </div>
 
       {/* Sessões */}

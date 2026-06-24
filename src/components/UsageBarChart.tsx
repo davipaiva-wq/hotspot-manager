@@ -13,19 +13,41 @@ function shortDate(dateStr: string) {
   return `${parseInt(d)} de ${months[parseInt(m) - 1]}.`;
 }
 
+function fillRange(data: DayData[], from: string, to: string): DayData[] {
+  const map = new Map(data.map((d) => [d.date, d.bytesTotal]));
+  const result: DayData[] = [];
+  const cur = new Date(from + "T12:00:00Z");
+  const end = new Date(to + "T12:00:00Z");
+  while (cur <= end) {
+    const dateStr = cur.toISOString().split("T")[0];
+    result.push({ date: dateStr, bytesTotal: map.get(dateStr) ?? 0 });
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  return result;
+}
+
 export default function UsageBarChart({
   data,
+  from,
+  to,
   color = "blue",
 }: {
   data: DayData[];
+  from?: string;
+  to?: string;
   color?: "blue" | "indigo";
 }) {
-  if (!data.length)
+  const filled = from && to ? fillRange(data, from, to) : data;
+
+  if (!filled.length)
     return <p className="text-sm text-gray-400 text-center py-8">Sem dados de uso.</p>;
 
-  const max = Math.max(...data.map((d) => d.bytesTotal), 1);
-  const total = data.reduce((acc, d) => acc + d.bytesTotal, 0);
+  const max = Math.max(...filled.map((d) => d.bytesTotal), 1);
+  const total = filled.reduce((acc, d) => acc + d.bytesTotal, 0);
   const barColor = color === "indigo" ? "bg-indigo-500 hover:bg-indigo-600" : "bg-blue-500 hover:bg-blue-600";
+
+  const first = filled[0].date;
+  const last = filled[filled.length - 1].date;
 
   return (
     <div>
@@ -44,7 +66,7 @@ export default function UsageBarChart({
         {/* Bars + X axis */}
         <div className="flex-1 min-w-0">
           <div className="flex items-end gap-px h-36 border-b border-gray-200">
-            {data.map((d) => {
+            {filled.map((d) => {
               const pct = (d.bytesTotal / max) * 100;
               return (
                 <div
@@ -52,21 +74,25 @@ export default function UsageBarChart({
                   className="flex-1 relative group cursor-default"
                   style={{ height: "100%", display: "flex", alignItems: "flex-end" }}
                 >
-                  <div
-                    className={`w-full rounded-t transition-colors ${barColor}`}
-                    style={{ height: `${Math.max(pct, 1)}%` }}
-                  />
-                  <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap hidden group-hover:block z-10 pointer-events-none">
-                    {shortDate(d.date)}: {formatBytes(d.bytesTotal)}
-                  </div>
+                  {d.bytesTotal > 0 && (
+                    <>
+                      <div
+                        className={`w-full rounded-t transition-colors ${barColor}`}
+                        style={{ height: `${pct}%` }}
+                      />
+                      <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap hidden group-hover:block z-10 pointer-events-none">
+                        {shortDate(d.date)}: {formatBytes(d.bytesTotal)}
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })}
           </div>
 
           <div className="flex justify-between text-xs text-gray-400 mt-1.5">
-            <span>{shortDate(data[0].date)}</span>
-            <span>{shortDate(data[data.length - 1].date)}</span>
+            <span>{shortDate(first)}</span>
+            <span>{shortDate(last)}</span>
           </div>
         </div>
       </div>

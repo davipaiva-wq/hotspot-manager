@@ -19,6 +19,8 @@ export async function GET() {
       name: users.name,
       packageName: users.packageName,
       packageExpiresAt: users.packageExpiresAt,
+      packageDays: users.packageDays,
+      lastRenewedAt: users.lastRenewedAt,
       quotaBytes: users.quotaBytes,
       consumedBytes: users.consumedBytes,
       dailyLimitBytes: users.dailyLimitBytes,

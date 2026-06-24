@@ -9,6 +9,8 @@ interface Profile {
   name: string | null;
   packageName: string | null;
   packageExpiresAt: string | null;
+  packageDays: number;
+  lastRenewedAt: string | null;
   quotaBytes: number;
   consumedBytes: number;
   dailyLimitBytes: number;
@@ -133,12 +135,23 @@ export default function PortalHome() {
         </div>
       )}
       {/* Gráfico de consumo diário */}
-      {daily.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <h2 className="font-semibold text-gray-900 mb-4">Consumo diário</h2>
-          <UsageBarChart data={daily} />
-        </div>
-      )}
+      {(() => {
+        const expiresAt = profile.packageExpiresAt;
+        const renewedAt = profile.lastRenewedAt;
+        const days = profile.packageDays ?? 30;
+        const chartTo = expiresAt ? expiresAt.slice(0, 10) : undefined;
+        const chartFrom = renewedAt
+          ? renewedAt.slice(0, 10)
+          : chartTo
+          ? new Date(new Date(chartTo).getTime() - days * 86400000).toISOString().split("T")[0]
+          : undefined;
+        return (
+          <div className="bg-white rounded-2xl border border-gray-200 p-5">
+            <h2 className="font-semibold text-gray-900 mb-4">Consumo diário</h2>
+            <UsageBarChart data={daily} from={chartFrom} to={chartTo} />
+          </div>
+        );
+      })()}
 
       <div>
         <h1 className="text-xl font-bold text-gray-900">Meu Pacote</h1>

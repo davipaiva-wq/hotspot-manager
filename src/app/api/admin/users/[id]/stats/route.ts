@@ -47,6 +47,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       mac: macMapping?.mac ?? user.mac,
       packageName: user.packageName,
       packageExpiresAt: user.packageExpiresAt,
+      packageDays: user.packageDays,
+      lastRenewedAt: user.lastRenewedAt,
       quotaBytes: user.quotaBytes,
       consumedBytes: user.consumedBytes,
       dailyLimitBytes: user.dailyLimitBytes,

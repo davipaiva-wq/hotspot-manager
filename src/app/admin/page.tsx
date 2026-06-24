@@ -144,6 +144,8 @@ export default async function AdminDashboard() {
           <h2 className="font-semibold text-gray-900 mb-4">Consumo total da rede por dia</h2>
           <UsageBarChart
             data={totalByDay.map(d => ({ date: d.date, bytesTotal: Number(d.bytesTotal ?? 0) }))}
+            from={thirtyDaysAgoStr}
+            to={new Date().toISOString().split("T")[0]}
             color="indigo"
           />
         </div>
