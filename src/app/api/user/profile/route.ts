@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { users, dailyUsage } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { todayDate } from "@/lib/utils";
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const userId = Number(session.user.id);
 
   const [user] = await db
     .select({
@@ -23,10 +26,16 @@ export async function GET() {
       dailyResetAt: users.dailyResetAt,
     })
     .from(users)
-    .where(eq(users.id, Number(session.user.id)))
+    .where(eq(users.id, userId))
     .limit(1);
 
-  return NextResponse.json(user);
+  const [todayRow] = await db
+    .select({ bytesTotal: dailyUsage.bytesTotal })
+    .from(dailyUsage)
+    .where(and(eq(dailyUsage.userId, userId), eq(dailyUsage.date, todayDate())))
+    .limit(1);
+
+  return NextResponse.json({ ...user, dailyConsumedBytes: todayRow?.bytesTotal ?? 0 });
 }
 
 export async function PATCH(req: NextRequest) {
