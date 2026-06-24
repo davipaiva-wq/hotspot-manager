@@ -47,14 +47,18 @@ export default async function AdminDashboard() {
     .groupBy(users.id, users.username, users.name)
     .orderBy(desc(max(sessions.startedAt)));
 
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+  // Calcula o ciclo atual: começa no dia 17 deste mês (ou do mês anterior se ainda não chegou)
+  const nowSP = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const cycleStartMonth = nowSP.getDate() >= 17 ? nowSP.getMonth() : nowSP.getMonth() - 1;
+  const cycleStart = new Date(nowSP.getFullYear(), cycleStartMonth, 17);
+  const cycleEnd = new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, 16);
+  const cycleStartStr = cycleStart.toISOString().split("T")[0];
+  const cycleEndStr = cycleEnd.toISOString().split("T")[0];
 
   const totalByDay = await db
     .select({ date: dailyUsage.date, bytesTotal: sum(dailyUsage.bytesTotal) })
     .from(dailyUsage)
-    .where(gte(dailyUsage.date, thirtyDaysAgoStr))
+    .where(gte(dailyUsage.date, cycleStartStr))
     .groupBy(dailyUsage.date)
     .orderBy(dailyUsage.date);
 
@@ -144,8 +148,8 @@ export default async function AdminDashboard() {
           <h2 className="font-semibold text-gray-900 mb-4">Consumo total da rede por dia</h2>
           <UsageBarChart
             data={totalByDay.map(d => ({ date: d.date, bytesTotal: Number(d.bytesTotal ?? 0) }))}
-            from={thirtyDaysAgoStr}
-            to={new Date().toISOString().split("T")[0]}
+            from={cycleStartStr}
+            to={cycleEndStr}
             color="indigo"
           />
         </div>
