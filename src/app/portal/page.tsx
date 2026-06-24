@@ -141,9 +141,9 @@ export default function PortalHome() {
         const days = profile.packageDays ?? 30;
         const chartTo = expiresAt ? expiresAt.slice(0, 10) : undefined;
         const chartFrom = renewedAt
-          ? renewedAt.slice(0, 10)
+          ? new Date(renewedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).split("/").reverse().join("-")
           : chartTo
-          ? new Date(new Date(chartTo).getTime() - days * 86400000).toISOString().split("T")[0]
+          ? new Date(new Date(chartTo + "T12:00:00Z").getTime() - (days - 1) * 86400000).toISOString().split("T")[0]
           : undefined;
         return (
           <div className="bg-white rounded-2xl border border-gray-200 p-5">

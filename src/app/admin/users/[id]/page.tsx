@@ -135,8 +135,11 @@ export default function UserDetailPage() {
         <h2 className="font-semibold text-gray-900 mb-4">Consumo diário</h2>
         {(() => {
           const chartTo = user.packageExpiresAt ? user.packageExpiresAt.slice(0, 10) : undefined;
-          const chartFrom = user.lastSeenAt && chartTo
-            ? new Date(new Date(chartTo).getTime() - (user.packageDays ?? 30) * 86400000).toISOString().split("T")[0]
+          const days = user.packageDays ?? 30;
+          const chartFrom = user.lastRenewedAt
+            ? new Date(user.lastRenewedAt).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).split("/").reverse().join("-")
+            : chartTo
+            ? new Date(new Date(chartTo + "T12:00:00Z").getTime() - (days - 1) * 86400000).toISOString().split("T")[0]
             : undefined;
           return <UsageBarChart data={daily} from={chartFrom} to={chartTo} />;
         })()}
