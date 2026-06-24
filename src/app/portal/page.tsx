@@ -27,7 +27,11 @@ export default function PortalHome() {
     setDailyMB(data.dailyLimitBytes > 0 ? String(data.dailyLimitBytes / 1048576) : "");
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    const id = setInterval(load, 15000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     if (!profile) return;
