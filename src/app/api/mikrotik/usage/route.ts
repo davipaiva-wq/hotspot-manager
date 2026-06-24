@@ -199,7 +199,11 @@ export async function POST(req: NextRequest) {
     const dailyExceeded = user.dailyLimitBytes > 0 && newDailyConsumed >= user.dailyLimitBytes;
     const packageExpired = user.packageExpiresAt != null && new Date(user.packageExpiresAt) < new Date();
 
-    const status = (quotaExceeded || dailyExceeded || packageExpired) ? "disconnect" : "ok";
+    if (user.forceDisconnect) {
+      await db.update(users).set({ forceDisconnect: false }).where(eq(users.id, user.id));
+    }
+
+    const status = (quotaExceeded || dailyExceeded || packageExpired || user.forceDisconnect) ? "disconnect" : "ok";
     results.push({ mac: s.mac, username: user.username, status });
   }
 
