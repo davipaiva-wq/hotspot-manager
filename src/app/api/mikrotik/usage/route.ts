@@ -62,6 +62,20 @@ export async function POST(req: NextRequest) {
       continue;
     }
 
+    // Reset daily counter if it's a new day (user may have stayed connected overnight)
+    const resetDate = user.dailyResetAt
+      ? new Date(user.dailyResetAt).toLocaleDateString("pt-BR", {
+          timeZone: "America/Sao_Paulo",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        }).split("/").reverse().join("-")
+      : null;
+    if (resetDate !== today) {
+      await db.update(users).set({ dailyConsumedBytes: 0, dailyResetAt: new Date() }).where(eq(users.id, user.id));
+      user = { ...user, dailyConsumedBytes: 0, dailyResetAt: new Date() };
+    }
+
     const totalBytes = s.bytesIn + s.bytesOut;
     let newConsumed = user.consumedBytes;
     let newDailyConsumed = user.dailyConsumedBytes;
