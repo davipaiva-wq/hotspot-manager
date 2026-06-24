@@ -198,12 +198,13 @@ export async function POST(req: NextRequest) {
     const quotaExceeded = user.quotaBytes > 0 && newConsumed >= user.quotaBytes;
     const dailyExceeded = user.dailyLimitBytes > 0 && newDailyConsumed >= user.dailyLimitBytes;
     const packageExpired = user.packageExpiresAt != null && new Date(user.packageExpiresAt) < new Date();
+    const blocked = !user.active;
 
     if (user.forceDisconnect) {
       await db.update(users).set({ forceDisconnect: false }).where(eq(users.id, user.id));
     }
 
-    const status = (quotaExceeded || dailyExceeded || packageExpired || user.forceDisconnect) ? "disconnect" : "ok";
+    const status = (quotaExceeded || dailyExceeded || packageExpired || blocked || user.forceDisconnect) ? "disconnect" : "ok";
     results.push({ mac: s.mac, username: user.username, status });
   }
 

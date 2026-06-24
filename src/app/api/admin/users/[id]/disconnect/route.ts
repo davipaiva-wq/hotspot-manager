@@ -16,6 +16,6 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "invalid id" }, { status: 400 });
   }
 
-  await db.update(users).set({ forceDisconnect: true }).where(eq(users.id, userId));
+  await db.update(users).set({ forceDisconnect: true, active: false }).where(eq(users.id, userId));
   return NextResponse.json({ ok: true });
 }

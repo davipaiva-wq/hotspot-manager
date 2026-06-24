@@ -61,7 +61,7 @@ export default function UserDetailPage() {
   }, [id]);
 
   async function handleDisconnect() {
-    if (!confirm("Desconectar este usuário agora?")) return;
+    if (!confirm("Desconectar e bloquear este usuário? Ele só poderá se reconectar quando você clicar em Ativar.")) return;
     setDisconnecting(true);
     await fetch(`/api/admin/users/${id}/disconnect`, { method: "POST" });
     setDisconnecting(false);
