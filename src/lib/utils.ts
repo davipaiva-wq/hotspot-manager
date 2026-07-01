@@ -17,17 +17,14 @@ export function formatDate(date: Date | string): string {
   });
 }
 
+// Retorna data UTC (YYYY-MM-DD) — alinha com contagem Starlink
 export function todayDate(): string {
-  return new Date().toLocaleDateString("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).split("/").reverse().join("-");
+  return new Date().toISOString().split("T")[0];
 }
 
+// Alias mantido para compatibilidade
 export function todayDateUTC(): string {
-  return new Date().toISOString().split("T")[0];
+  return todayDate();
 }
 
 export function percentUsed(consumed: number, total: number): number {
