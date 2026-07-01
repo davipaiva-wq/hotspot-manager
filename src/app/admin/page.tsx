@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { users, sessions, dailyUsage } from "@/db/schema";
-import { eq, count, sum, desc, max, gte, isNotNull } from "drizzle-orm";
+import { eq, count, sum, desc, max, gte, isNotNull, sql } from "drizzle-orm";
 import { formatBytes } from "@/lib/utils";
 import Link from "next/link";
 import RenewButton from "./RenewButton";
@@ -56,12 +56,16 @@ export default async function AdminDashboard() {
   const cycleStartStr = cycleStart.toISOString().split("T")[0];
   const cycleEndStr = cycleEnd.toISOString().split("T")[0];
 
+  // Agrupa por UTC (para bater com Starlink); usa date como fallback para registros antigos sem date_utc
   const totalByDay = await db
-    .select({ date: dailyUsage.date, bytesTotal: sum(dailyUsage.bytesTotal) })
+    .select({
+      date: sql<string>`COALESCE(${dailyUsage.dateUtc}, ${dailyUsage.date})`.as("d"),
+      bytesTotal: sum(dailyUsage.bytesTotal),
+    })
     .from(dailyUsage)
-    .where(gte(dailyUsage.date, cycleStartStr))
-    .groupBy(dailyUsage.date)
-    .orderBy(dailyUsage.date);
+    .where(gte(sql<string>`COALESCE(${dailyUsage.dateUtc}, ${dailyUsage.date})`, cycleStartStr))
+    .groupBy(sql`COALESCE(${dailyUsage.dateUtc}, ${dailyUsage.date})`)
+    .orderBy(sql`COALESCE(${dailyUsage.dateUtc}, ${dailyUsage.date})`);
 
   const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
   const onlineUsers = await db

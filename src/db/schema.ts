@@ -67,7 +67,8 @@ export const dailyUsage = pgTable("daily_usage", {
   userId: integer("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD (America/Sao_Paulo)
+  dateUtc: varchar("date_utc", { length: 10 }), // YYYY-MM-DD (UTC — para comparação Starlink)
   bytesTotal: bigint("bytes_total", { mode: "number" }).notNull().default(0),
 });
 

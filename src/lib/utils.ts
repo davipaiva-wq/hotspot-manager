@@ -26,6 +26,10 @@ export function todayDate(): string {
   }).split("/").reverse().join("-");
 }
 
+export function todayDateUTC(): string {
+  return new Date().toISOString().split("T")[0];
+}
+
 export function percentUsed(consumed: number, total: number): number {
   if (total === 0) return 0;
   return Math.min(100, Math.round((consumed / total) * 100));

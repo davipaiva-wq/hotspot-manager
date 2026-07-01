@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { users, sessions, dailyUsage, macMappings } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { todayDate } from "@/lib/utils";
+import { todayDate, todayDateUTC } from "@/lib/utils";
 
 // MikroTik scheduler POSTs usage every N minutes.
 // Body: { sessions: [{ username, sessionId, ip, mac, bytesIn, bytesOut }] }
@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
   }[] = body.sessions ?? [];
 
   const today = todayDate();
+  const todayUTC = todayDateUTC();
   const results: { mac: string; username: string; status: string }[] = [];
 
   for (const s of activeSessions) {
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
           if (day) {
             await db.update(dailyUsage).set({ bytesTotal: day.bytesTotal + totalBytes }).where(eq(dailyUsage.id, day.id));
           } else {
-            await db.insert(dailyUsage).values({ userId: user.id, date: today, bytesTotal: totalBytes });
+            await db.insert(dailyUsage).values({ userId: user.id, date: today, dateUtc: todayUTC, bytesTotal: totalBytes });
           }
         }
       } else if (delta > 0) {
@@ -165,7 +166,7 @@ export async function POST(req: NextRequest) {
             .set({ bytesTotal: day.bytesTotal + delta })
             .where(eq(dailyUsage.id, day.id));
         } else {
-          await db.insert(dailyUsage).values({ userId: user.id, date: today, bytesTotal: delta });
+          await db.insert(dailyUsage).values({ userId: user.id, date: today, dateUtc: todayUTC, bytesTotal: delta });
         }
       } else {
         // delta === 0: usuário online mas sem novos bytes — só atualiza lastSeenAt
