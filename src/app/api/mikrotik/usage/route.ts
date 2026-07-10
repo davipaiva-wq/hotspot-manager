@@ -189,6 +189,20 @@ export async function POST(req: NextRequest) {
           updatedAt: new Date(),
         })
         .where(eq(users.id, user.id));
+
+      if (totalBytes > 0) {
+        const [day] = await db
+          .select()
+          .from(dailyUsage)
+          .where(and(eq(dailyUsage.userId, user.id), eq(dailyUsage.date, today)))
+          .limit(1);
+
+        if (day) {
+          await db.update(dailyUsage).set({ bytesTotal: day.bytesTotal + totalBytes }).where(eq(dailyUsage.id, day.id));
+        } else {
+          await db.insert(dailyUsage).values({ userId: user.id, date: today, dateUtc: todayUTC, bytesTotal: totalBytes });
+        }
+      }
     }
 
     const quotaExceeded = user.quotaBytes > 0 && newConsumed >= user.quotaBytes;
