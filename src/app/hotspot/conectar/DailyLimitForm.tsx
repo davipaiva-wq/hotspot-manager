@@ -9,14 +9,16 @@ interface Props {
   dailyConsumedBytes: number;
   dailyReached: boolean;
   link: string;
+  speedProfile: string;
 }
 
-export default function DailyLimitForm({ userId, dailyLimitBytes, dailyConsumedBytes, dailyReached, link }: Props) {
+export default function DailyLimitForm({ userId, dailyLimitBytes, dailyConsumedBytes, dailyReached, link, speedProfile: initialSpeed }: Props) {
   const [limitBytes, setLimitBytes] = useState(dailyLimitBytes);
   const [dailyMB, setDailyMB] = useState(dailyLimitBytes > 0 ? String(dailyLimitBytes / 1048576) : "");
   const [consumed, setConsumed] = useState(dailyConsumedBytes);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [speed, setSpeed] = useState(initialSpeed ?? "standard");
 
   const reached = limitBytes > 0 && consumed >= limitBytes;
   const connectUrl = `/api/hotspot/connect?link=${encodeURIComponent(link)}`;
@@ -32,6 +34,15 @@ export default function DailyLimitForm({ userId, dailyLimitBytes, dailyConsumedB
     setLimitBytes(bytes);
     setSaved(true);
     setSaving(false);
+  }
+
+  async function selectSpeed(value: string) {
+    setSpeed(value);
+    await fetch("/api/user/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ speedProfile: value }),
+    });
   }
 
   return (
@@ -72,6 +83,30 @@ export default function DailyLimitForm({ userId, dailyLimitBytes, dailyConsumedB
           >
             {saving ? "..." : saved ? "Salvo ✓" : "Salvar"}
           </button>
+        </div>
+      </div>
+
+      {/* Seletor de velocidade */}
+      <div className="border border-gray-200 rounded-xl p-4 space-y-2">
+        <p className="text-sm font-medium text-gray-700">Velocidade</p>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { value: "standard", label: "Padrão", speed: "10 / 7 Mbps" },
+            { value: "premium", label: "Premium", speed: "50 / 10 Mbps" },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => selectSpeed(opt.value)}
+              className={`flex flex-col items-center rounded-xl border-2 py-3 px-2 transition-colors ${
+                speed === opt.value
+                  ? "border-blue-500 bg-blue-50 text-blue-700"
+                  : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+              }`}
+            >
+              <span className="text-sm font-semibold">{opt.label}</span>
+              <span className="text-xs mt-0.5 opacity-70">{opt.speed}</span>
+            </button>
+          ))}
         </div>
       </div>
 

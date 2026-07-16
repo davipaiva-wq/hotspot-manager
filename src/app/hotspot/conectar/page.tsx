@@ -83,6 +83,7 @@ export default async function HotspotConectar({
               dailyConsumedBytes={user.dailyConsumedBytes}
               dailyReached={dailyReached}
               link={link}
+              speedProfile={user.speedProfile}
             />
           )}
 

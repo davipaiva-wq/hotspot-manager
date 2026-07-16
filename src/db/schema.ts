@@ -34,6 +34,7 @@ export const users = pgTable("users", {
   dailyResetAt: timestamp("daily_reset_at"),
   active: boolean("active").notNull().default(true),
   forceDisconnect: boolean("force_disconnect").notNull().default(false),
+  speedProfile: varchar("speed_profile", { length: 20 }).notNull().default("standard"),
   lastSeenAt: timestamp("last_seen_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

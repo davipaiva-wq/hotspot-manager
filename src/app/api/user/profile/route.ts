@@ -74,5 +74,16 @@ export async function PATCH(req: NextRequest) {
       .where(eq(users.id, Number(session.user.id)));
   }
 
+  if (body.speedProfile !== undefined) {
+    const allowed = ["standard", "premium"];
+    if (!allowed.includes(body.speedProfile)) {
+      return NextResponse.json({ error: "Invalid speed profile" }, { status: 400 });
+    }
+    await db
+      .update(users)
+      .set({ speedProfile: body.speedProfile, updatedAt: new Date() })
+      .where(eq(users.id, Number(session.user.id)));
+  }
+
   return NextResponse.json({ ok: true });
 }

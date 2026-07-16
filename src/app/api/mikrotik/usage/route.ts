@@ -25,7 +25,12 @@ export async function POST(req: NextRequest) {
 
   const today = todayDate();
   const todayUTC = todayDateUTC();
-  const results: { mac: string; username: string; status: string }[] = [];
+  const RATE_LIMITS: Record<string, string> = {
+    standard: "10M/7M",
+    premium: "50M/10M",
+  };
+
+  const results: { mac: string; username: string; status: string; rateLimit: string }[] = [];
 
   for (const s of activeSessions) {
     // Try to find user by MAC mapping first (handles generic hotspot user case)
@@ -215,7 +220,8 @@ export async function POST(req: NextRequest) {
     }
 
     const status = (quotaExceeded || dailyExceeded || packageExpired || blocked || user.forceDisconnect) ? "disconnect" : "ok";
-    results.push({ mac: s.mac, username: user.username, status });
+    const rateLimit = RATE_LIMITS[user.speedProfile] ?? RATE_LIMITS.standard;
+    results.push({ mac: s.mac, username: user.username, status, rateLimit });
   }
 
   return NextResponse.json({ updated: results });
