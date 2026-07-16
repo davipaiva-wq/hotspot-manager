@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!user) {
-      results.push({ mac: s.mac, username: s.username, status: "not_found" });
+      results.push({ mac: s.mac, username: s.username, status: "not_found", rateLimit: RATE_LIMITS.standard });
       continue;
     }
 
