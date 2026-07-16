@@ -26,8 +26,8 @@ export async function POST(req: NextRequest) {
   const today = todayDate();
   const todayUTC = todayDateUTC();
   const RATE_LIMITS: Record<string, string> = {
-    standard: "10M/7M",
-    premium: "50M/10M",
+    standard: "7M/10M",
+    premium: "10M/50M",
   };
 
   const results: { mac: string; username: string; status: string; rateLimit: string }[] = [];

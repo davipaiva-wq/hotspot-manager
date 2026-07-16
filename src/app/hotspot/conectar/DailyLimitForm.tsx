@@ -91,8 +91,8 @@ export default function DailyLimitForm({ userId, dailyLimitBytes, dailyConsumedB
         <p className="text-sm font-medium text-gray-700">Velocidade</p>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { value: "standard", label: "Padrão", speed: "10 / 7 Mbps" },
-            { value: "premium", label: "Alta Velocidade", speed: "50 / 10 Mbps" },
+            { value: "standard", label: "Padrão", speed: "10 down / 7 up" },
+            { value: "premium", label: "Alta Velocidade", speed: "50 down / 10 up" },
           ].map(opt => (
             <button
               key={opt.value}
