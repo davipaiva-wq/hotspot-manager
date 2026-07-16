@@ -91,8 +91,8 @@ export default function DailyLimitForm({ userId, dailyLimitBytes, dailyConsumedB
         <p className="text-sm font-medium text-gray-700">Velocidade</p>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { value: "standard", label: "Padrão", speed: "10 down / 7 up" },
-            { value: "premium", label: "Alta Velocidade", speed: "50 down / 10 up" },
+            { value: "standard", label: "Padrão", speed: "" },
+            { value: "premium", label: "Alta", speed: "" },
           ].map(opt => (
             <button
               key={opt.value}
@@ -104,7 +104,7 @@ export default function DailyLimitForm({ userId, dailyLimitBytes, dailyConsumedB
               }`}
             >
               <span className="text-sm font-semibold">{opt.label}</span>
-              <span className="text-xs mt-0.5 opacity-70">{opt.speed}</span>
+              {opt.speed && <span className="text-xs mt-0.5 opacity-70">{opt.speed}</span>}
             </button>
           ))}
         </div>
