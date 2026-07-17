@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { users, sessions, dailyUsage } from "@/db/schema";
-import { eq, count, sum, desc, max, gte, isNotNull, sql } from "drizzle-orm";
+import { eq, count, sum, desc, max, gte, isNotNull, sql, and } from "drizzle-orm";
 import { formatBytes } from "@/lib/utils";
 import Link from "next/link";
 import RenewButton from "./RenewButton";
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
   const [totalUsers] = await db.select({ count: count() }).from(users).where(eq(users.role, "user"));
-  const [activeUsers] = await db.select({ count: count() }).from(users).where(eq(users.active, true));
+  const [activeUsers] = await db.select({ count: count() }).from(users).where(and(eq(users.active, true), eq(users.role, "user")));
   const [totalConsumed] = await db.select({ sum: sum(users.consumedBytes) }).from(users);
 
   const allUsers = await db
