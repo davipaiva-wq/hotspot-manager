@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { cookies } from "next/headers";
 import { db } from "@/db";
 import { users, dailyUsage } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { todayDate } from "@/lib/utils";
 
-export async function GET() {
+async function resolveUserId(): Promise<number | null> {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (session?.user?.id) return Number(session.user.id);
+  const cookieStore = await cookies();
+  const uid = cookieStore.get("hsp-uid")?.value;
+  return uid ? Number(uid) : null;
+}
 
-  const userId = Number(session.user.id);
+export async function GET() {
+  const userId = await resolveUserId();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const [user] = await db
     .select({
@@ -41,8 +48,8 @@ export async function GET() {
 }
 
 export async function PATCH(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const userId = await resolveUserId();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
 
@@ -54,7 +61,7 @@ export async function PATCH(req: NextRequest) {
     const [user] = await db
       .select({ passwordHash: users.passwordHash })
       .from(users)
-      .where(eq(users.id, Number(session.user.id)))
+      .where(eq(users.id, userId))
       .limit(1);
 
     const valid = await bcrypt.compare(body.currentPassword, user.passwordHash);
@@ -64,14 +71,14 @@ export async function PATCH(req: NextRequest) {
     await db
       .update(users)
       .set({ passwordHash, updatedAt: new Date() })
-      .where(eq(users.id, Number(session.user.id)));
+      .where(eq(users.id, userId));
   }
 
   if (body.dailyLimitBytes !== undefined) {
     await db
       .update(users)
       .set({ dailyLimitBytes: body.dailyLimitBytes, updatedAt: new Date() })
-      .where(eq(users.id, Number(session.user.id)));
+      .where(eq(users.id, userId));
   }
 
   if (body.speedProfile !== undefined) {
@@ -82,7 +89,7 @@ export async function PATCH(req: NextRequest) {
     await db
       .update(users)
       .set({ speedProfile: body.speedProfile, updatedAt: new Date() })
-      .where(eq(users.id, Number(session.user.id)));
+      .where(eq(users.id, userId));
   }
 
   return NextResponse.json({ ok: true });
