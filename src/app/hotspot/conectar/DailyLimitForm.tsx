@@ -38,11 +38,14 @@ export default function DailyLimitForm({ userId, dailyLimitBytes, dailyConsumedB
 
   async function selectSpeed(value: string) {
     setSpeed(value);
-    await fetch("/api/user/profile", {
+    const res = await fetch("/api/user/profile", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ speedProfile: value }),
     });
+    if (!res.ok) {
+      alert(`Erro ao salvar velocidade (${res.status}). Faça login novamente.`);
+    }
   }
 
   return (
