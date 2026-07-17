@@ -11,7 +11,13 @@ import UsageBarChart from "@/components/UsageBarChart";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminDashboard() {
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ cycle?: string }>;
+}) {
+  const { cycle: cycleParam } = await searchParams;
+  const cycleOffset = parseInt(cycleParam ?? "0", 10) || 0;
   const [totalUsers] = await db.select({ count: count() }).from(users).where(eq(users.role, "user"));
   const [activeUsers] = await db.select({ count: count() }).from(users).where(and(eq(users.active, true), eq(users.role, "user")));
   const [totalConsumed] = await db.select({ sum: sum(users.consumedBytes) }).from(users);
@@ -51,24 +57,30 @@ export default async function AdminDashboard() {
 
   // Ciclo baseado em UTC para bater com a Starlink (reseta dia 17 meia-noite UTC)
   const nowUTC = new Date();
-  const cycleStartMonth = nowUTC.getUTCDate() >= 17 ? nowUTC.getUTCMonth() : nowUTC.getUTCMonth() - 1;
-  const cycleStartYear = cycleStartMonth < 0 ? nowUTC.getUTCFullYear() - 1 : nowUTC.getUTCFullYear();
-  const normalizedMonth = ((cycleStartMonth % 12) + 12) % 12;
+  const baseMonth = nowUTC.getUTCDate() >= 17 ? nowUTC.getUTCMonth() : nowUTC.getUTCMonth() - 1;
+  const adjustedMonth = baseMonth + cycleOffset;
+  const cycleStartYear = Math.floor((nowUTC.getUTCFullYear() * 12 + adjustedMonth) / 12);
+  const normalizedMonth = ((adjustedMonth % 12) + 12) % 12;
   const cycleStart = new Date(Date.UTC(cycleStartYear, normalizedMonth, 17));
   const cycleEnd = new Date(Date.UTC(cycleStart.getUTCFullYear(), cycleStart.getUTCMonth() + 1, 16));
   const cycleStartStr = cycleStart.toISOString().split("T")[0];
   const cycleEndStr = cycleEnd.toISOString().split("T")[0];
+  const isCurrentCycle = cycleOffset === 0;
 
   // Agrupa por UTC (para bater com Starlink); usa date como fallback para registros antigos sem date_utc
+  const dateCol = sql<string>`COALESCE(${dailyUsage.dateUtc}, ${dailyUsage.date})`;
   const totalByDay = await db
     .select({
-      date: sql<string>`COALESCE(${dailyUsage.dateUtc}, ${dailyUsage.date})`.as("d"),
+      date: dateCol.as("d"),
       bytesTotal: sum(dailyUsage.bytesTotal),
     })
     .from(dailyUsage)
-    .where(gte(sql<string>`COALESCE(${dailyUsage.dateUtc}, ${dailyUsage.date})`, cycleStartStr))
-    .groupBy(sql`COALESCE(${dailyUsage.dateUtc}, ${dailyUsage.date})`)
-    .orderBy(sql`COALESCE(${dailyUsage.dateUtc}, ${dailyUsage.date})`);
+    .where(and(
+      gte(dateCol, cycleStartStr),
+      sql`COALESCE(${dailyUsage.dateUtc}, ${dailyUsage.date}) <= ${cycleEndStr}`,
+    ))
+    .groupBy(dateCol)
+    .orderBy(dateCol);
 
   const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000);
   const onlineUsers = await db
@@ -156,17 +168,38 @@ export default async function AdminDashboard() {
       )}
 
       {/* Gráfico total diário */}
-      {totalByDay.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Consumo total da rede por dia</h2>
+      <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-gray-900">Consumo total da rede por dia</h2>
+          <div className="flex items-center gap-2 text-sm">
+            <Link
+              href={`/admin?cycle=${cycleOffset - 1}`}
+              className="px-2 py-1 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600"
+            >
+              ←
+            </Link>
+            <span className="text-gray-500 text-xs whitespace-nowrap">
+              {cycleStartStr} — {cycleEndStr}
+            </span>
+            <Link
+              href={`/admin?cycle=${cycleOffset + 1}`}
+              className={`px-2 py-1 rounded-lg border border-gray-200 text-gray-600 ${isCurrentCycle ? "opacity-30 pointer-events-none" : "hover:bg-gray-50"}`}
+            >
+              →
+            </Link>
+          </div>
+        </div>
+        {totalByDay.length > 0 ? (
           <UsageBarChart
             data={totalByDay.map(d => ({ date: d.date, bytesTotal: Number(d.bytesTotal ?? 0) }))}
             from={cycleStartStr}
             to={cycleEndStr}
             color="indigo"
           />
-        </div>
-      )}
+        ) : (
+          <p className="text-sm text-gray-400 text-center py-8">Sem dados neste ciclo</p>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Todos os usuários por consumo */}
