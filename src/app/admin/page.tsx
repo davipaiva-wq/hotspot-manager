@@ -4,6 +4,7 @@ import { eq, count, sum, desc, max, gte, isNotNull, sql } from "drizzle-orm";
 import { formatBytes } from "@/lib/utils";
 import Link from "next/link";
 import RenewButton from "./RenewButton";
+import RenewAllButton from "./RenewAllButton";
 import DisconnectButton from "./DisconnectButton";
 import AutoRefresh from "./AutoRefresh";
 import UsageBarChart from "@/components/UsageBarChart";
@@ -91,7 +92,10 @@ export default async function AdminDashboard() {
   return (
     <div>
       <AutoRefresh interval={10000} />
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <RenewAllButton />
+      </div>
 
       {/* Alertas de vencimento */}
       {expiredOrSoon.length > 0 && (
