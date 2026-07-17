@@ -15,10 +15,10 @@ export default function AdminSenhaPage() {
     if (novo.length < 6) { setMsg("A senha deve ter pelo menos 6 caracteres."); return; }
     setLoading(true);
     setMsg("");
-    const res = await fetch("/api/portal/password", {
-      method: "POST",
+    const res = await fetch("/api/user/profile", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ current, novo }),
+      body: JSON.stringify({ currentPassword: current, newPassword: novo }),
     });
     const data = await res.json();
     if (res.ok) { setOk(true); setCurrent(""); setNovo(""); setConfirma(""); }
