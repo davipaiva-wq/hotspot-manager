@@ -158,7 +158,9 @@ export default async function AdminDashboard({
             {onlineUsers.map(u => (
               <div key={u.username} className="flex items-center gap-2 bg-white border border-green-100 rounded-lg px-3 py-2">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-sm font-medium text-gray-900">{u.name ?? u.username}</span>
+                <Link href={`/admin/users/${u.id}`} className="text-sm font-medium text-gray-900 hover:text-blue-600 hover:underline">
+                  {u.name ?? u.username}
+                </Link>
                 <span className="text-xs text-gray-400">{formatBytes(u.consumedBytes)}</span>
                 <DisconnectButton userId={u.id} username={u.name ?? u.username} />
               </div>
