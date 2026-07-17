@@ -21,7 +21,9 @@ export async function GET(req: NextRequest) {
   const mkUser = isPremium
     ? (process.env.MIKROTIK_HOTSPOT_USER_FAST || "hotspot-alta")
     : (process.env.MIKROTIK_HOTSPOT_USER || "hotspot");
-  const mkPass = process.env.MIKROTIK_HOTSPOT_PASS || "hotspot123";
+  const mkPass = isPremium
+    ? (process.env.MIKROTIK_HOTSPOT_PASS_FAST || process.env.MIKROTIK_HOTSPOT_PASS || "hotspot123")
+    : (process.env.MIKROTIK_HOTSPOT_PASS || "hotspot123");
 
   let target: string;
   try {
