@@ -49,11 +49,13 @@ export default async function AdminDashboard() {
     .groupBy(users.id, users.username, users.name)
     .orderBy(desc(max(sessions.startedAt)));
 
-  // Calcula o ciclo atual: começa no dia 17 deste mês (ou do mês anterior se ainda não chegou)
-  const nowSP = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  const cycleStartMonth = nowSP.getDate() >= 17 ? nowSP.getMonth() : nowSP.getMonth() - 1;
-  const cycleStart = new Date(nowSP.getFullYear(), cycleStartMonth, 17);
-  const cycleEnd = new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, 16);
+  // Ciclo baseado em UTC para bater com a Starlink (reseta dia 17 meia-noite UTC)
+  const nowUTC = new Date();
+  const cycleStartMonth = nowUTC.getUTCDate() >= 17 ? nowUTC.getUTCMonth() : nowUTC.getUTCMonth() - 1;
+  const cycleStartYear = cycleStartMonth < 0 ? nowUTC.getUTCFullYear() - 1 : nowUTC.getUTCFullYear();
+  const normalizedMonth = ((cycleStartMonth % 12) + 12) % 12;
+  const cycleStart = new Date(Date.UTC(cycleStartYear, normalizedMonth, 17));
+  const cycleEnd = new Date(Date.UTC(cycleStart.getUTCFullYear(), cycleStart.getUTCMonth() + 1, 16));
   const cycleStartStr = cycleStart.toISOString().split("T")[0];
   const cycleEndStr = cycleEnd.toISOString().split("T")[0];
 
