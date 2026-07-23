@@ -73,6 +73,15 @@ export const dailyUsage = pgTable("daily_usage", {
   bytesTotal: bigint("bytes_total", { mode: "number" }).notNull().default(0),
 });
 
+export const interfaceStats = pgTable("interface_stats", {
+  id: serial("id").primaryKey(),
+  recordedAt: timestamp("recorded_at").notNull().defaultNow(),
+  ether1RxBytes: bigint("ether1_rx_bytes", { mode: "number" }).notNull(),
+  ether1TxBytes: bigint("ether1_tx_bytes", { mode: "number" }).notNull(),
+  bridgeRxBytes: bigint("bridge_rx_bytes", { mode: "number" }).notNull(),
+  bridgeTxBytes: bigint("bridge_tx_bytes", { mode: "number" }).notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
